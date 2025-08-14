@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FileText, Users, Shield, CheckCircle, AlertCircle, Clock, Lock, Eye, Download, RefreshCw, Search, Info, XCircle } from 'lucide-react';
+import { FileText, Users, Shield, CheckCircle, AlertCircle, Clock, Lock, Eye, Download, RefreshCw, Search, Info, XCircle, ChevronRight } from 'lucide-react';
 import type { Document } from '@/lib/types';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -229,36 +229,38 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
                         Workflow Progress
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                {steps.map((step, index) => {
-                    const Icon = step.icon;
-                    const status = stepStatuses[index];
-                    const statusStyles = {
-                        'pending': { border: 'border-border', bg: 'bg-muted/50', iconBg: 'bg-muted-foreground/20', iconText: 'text-muted-foreground' },
-                        'in-progress': { border: 'border-primary', bg: 'bg-primary/10', iconBg: 'bg-primary', iconText: 'text-primary-foreground' },
-                        'completed': { border: 'border-green-500', bg: 'bg-green-500/10', iconBg: 'bg-green-500', iconText: 'text-white' },
-                        'error': { border: 'border-destructive', bg: 'bg-destructive/10', iconBg: 'bg-destructive', iconText: 'text-destructive-foreground' },
-                    };
-                    
-                    return (
-                    <div key={step.id} className={`flex items-center p-4 rounded-lg border-2 transition-all ${statusStyles[status].border} ${statusStyles[status].bg}`}>
-                        <div className={`flex items-center justify-center w-10 h-10 rounded-full mr-4 ${statusStyles[status].iconBg} ${statusStyles[status].iconText}`}>
-                            {status === 'error' ? <XCircle size={20} /> : <Icon size={20} />}
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="font-semibold">{step.name}</h3>
-                            <p className="text-sm text-muted-foreground capitalize">
-                                {status.replace('-', ' ')}
-                            </p>
-                        </div>
-                        {status === 'in-progress' && !isProcessing && (
-                            <div className="animate-pulse">
-                                <div className="w-3 h-3 bg-primary rounded-full"></div>
+                <CardContent className="overflow-x-auto pb-4">
+                  <div className="flex items-center gap-2">
+                    {steps.map((step, index) => {
+                        const Icon = step.icon;
+                        const status = stepStatuses[index];
+                        const statusStyles = {
+                            'pending': { border: 'border-border', bg: 'bg-muted/50', iconBg: 'bg-muted-foreground/20', iconText: 'text-muted-foreground' },
+                            'in-progress': { border: 'border-primary', bg: 'bg-primary/10', iconBg: 'bg-primary', iconText: 'text-primary-foreground' },
+                            'completed': { border: 'border-green-500', bg: 'bg-green-500/10', iconBg: 'bg-green-500', iconText: 'text-white' },
+                            'error': { border: 'border-destructive', bg: 'bg-destructive/10', iconBg: 'bg-destructive', iconText: 'text-destructive-foreground' },
+                        };
+                        
+                        return (
+                          <React.Fragment key={step.id}>
+                            <div className={`flex items-center p-3 rounded-lg border-2 transition-all w-48 flex-shrink-0 ${statusStyles[status].border} ${statusStyles[status].bg}`}>
+                                <div className={`flex items-center justify-center w-8 h-8 rounded-full mr-3 flex-shrink-0 ${statusStyles[status].iconBg} ${statusStyles[status].iconText}`}>
+                                    {status === 'error' ? <XCircle size={18} /> : <Icon size={18} />}
+                                </div>
+                                <div className="flex-1 overflow-hidden">
+                                    <h3 className="font-semibold text-sm truncate">{step.name}</h3>
+                                    <p className="text-xs text-muted-foreground capitalize">
+                                        {status.replace('-', ' ')}
+                                    </p>
+                                </div>
                             </div>
-                        )}
-                    </div>
-                    );
-                })}
+                            {index < steps.length - 1 && (
+                              <ChevronRight className="h-6 w-6 text-muted-foreground flex-shrink-0" />
+                            )}
+                          </React.Fragment>
+                        );
+                    })}
+                  </div>
                 </CardContent>
             </Card>
 
@@ -396,4 +398,3 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
 };
 
 export default TransactionDemo;
-
