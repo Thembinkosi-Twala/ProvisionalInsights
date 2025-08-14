@@ -4,17 +4,18 @@ import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Document } from '@/lib/types';
-import { ShieldCheck, Info, Pencil } from 'lucide-react';
+import { ShieldCheck, Info, Pencil, Download, CheckCircle, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import SignaturePad from './signature-pad';
 
 interface DocumentDetailsProps {
   document: Document | undefined;
-  onSign: (documentId: string, signatureDataUrl: string) => void;
+  onSign: (documentId: string, signatureDataUrl: string) => Promise<void>;
+  isLoading: boolean;
 }
 
-export default function DocumentDetails({ document, onSign }: DocumentDetailsProps) {
+export default function DocumentDetails({ document, onSign, isLoading }: DocumentDetailsProps) {
   const [isSigning, setIsSigning] = useState(false);
 
   if (!document) {
@@ -31,9 +32,18 @@ export default function DocumentDetails({ document, onSign }: DocumentDetailsPro
     );
   }
 
-  const handleSaveSignature = (signatureDataUrl: string) => {
-    onSign(document.id, signatureDataUrl);
+  const handleSaveSignature = async (signatureDataUrl: string) => {
+    await onSign(document.id, signatureDataUrl);
     setIsSigning(false);
+  }
+
+  const handleDownload = () => {
+    const link = document.createElement("a");
+    link.href = document.documentDataUri;
+    link.download = document.fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   const isCompliant = !!document.title && !!document.summary;
@@ -57,28 +67,28 @@ export default function DocumentDetails({ document, onSign }: DocumentDetailsPro
             ))}
           </div>
         </div>
-        <div>
-          <h4 className="font-semibold text-foreground mb-2">Compliance Check</h4>
-           <Badge variant={isCompliant ? "default" : "destructive"} className="bg-green-600 hover:bg-green-700 text-white">
-              <ShieldCheck className="mr-2 h-4 w-4" />
-              {isCompliant ? 'Compliant' : 'Non-Compliant'}
+        <div className="space-y-2">
+          <h4 className="font-semibold text-foreground">Compliance & Status</h4>
+           <div className="flex flex-wrap gap-2">
+            <Badge variant={isCompliant ? "default" : "destructive"} className={isCompliant ? "bg-green-600 hover:bg-green-700 text-white" : ""}>
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                {isCompliant ? 'Compliant' : 'Non-Compliant'}
             </Badge>
+            {document.isSigned && (
+                 <Badge variant="default" className="bg-blue-600 hover:bg-blue-700 text-white">
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Signed
+                 </Badge>
+            )}
+           </div>
         </div>
-        {document.signatureDataUrl && (
-          <div>
-            <h4 className="font-semibold text-foreground mb-2">Signature</h4>
-            <div className="border rounded-md p-2 bg-muted/50 max-w-sm">
-              <img src={document.signatureDataUrl} alt="Signature" className="w-full h-auto" />
-            </div>
-          </div>
-        )}
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex flex-wrap gap-2">
          <Dialog open={isSigning} onOpenChange={setIsSigning}>
             <DialogTrigger asChild>
-                <Button>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    {document.signatureDataUrl ? 'Re-Sign Document' : 'Sign Document'}
+                <Button disabled={isLoading}>
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Pencil className="mr-2 h-4 w-4" />}
+                    {document.isSigned ? 'Re-Sign Document' : 'Sign Document'}
                 </Button>
             </DialogTrigger>
             <DialogContent>
@@ -88,6 +98,10 @@ export default function DocumentDetails({ document, onSign }: DocumentDetailsPro
                 <SignaturePad onSave={handleSaveSignature} />
             </DialogContent>
         </Dialog>
+        <Button variant="outline" onClick={handleDownload}>
+            <Download className="mr-2 h-4 w-4" />
+            Download
+        </Button>
       </CardFooter>
     </Card>
   );

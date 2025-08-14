@@ -3,5 +3,6 @@ import { type ExtractDocumentMetadataOutput } from "@/ai/flows/extract-document-
 export interface Document extends ExtractDocumentMetadataOutput {
   id: string;
   fileName: string;
-  signatureDataUrl?: string;
+  documentDataUri: string;
+  isSigned: boolean;
 }

@@ -10,6 +10,9 @@ import DocumentAnalytics from '@/components/document-analytics';
 import DocumentFilters, { type Filter } from '@/components/document-filters';
 import { ProvincialInsightsIcon } from '@/components/icons';
 import { useToast } from '@/hooks/use-toast';
+import { signDocument } from './actions';
+import DocumentPreview from '@/components/document-preview';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function Home() {
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -51,12 +54,37 @@ export default function Home() {
     }
   };
 
-  const handleSignDocument = (documentId: string, signatureDataUrl: string) => {
-    setDocuments(prev =>
-      prev.map(doc =>
-        doc.id === documentId ? { ...doc, signatureDataUrl } : doc
-      )
-    );
+  const handleSignDocument = async (documentId: string, signatureDataUrl: string) => {
+    const originalDocument = documents.find(doc => doc.id === documentId);
+    if (!originalDocument) return;
+
+    setIsLoading(true);
+    try {
+      const result = await signDocument(originalDocument.documentDataUri, signatureDataUrl);
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      if (result.signedDocumentUri) {
+        setDocuments(prev =>
+          prev.map(doc =>
+            doc.id === documentId ? { ...doc, documentDataUri: result.signedDocumentUri!, isSigned: true } : doc
+          )
+        );
+        toast({
+            title: 'Document Signed',
+            description: 'The signature has been embedded into the document.',
+        });
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      toast({
+        variant: 'destructive',
+        title: 'Signing Failed',
+        description: `Could not sign the document. ${errorMessage}`,
+      });
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   const filteredDocuments = useMemo(() => {
@@ -111,14 +139,27 @@ export default function Home() {
             />
           </div>
           <div className="md:col-span-8 lg:col-span-9 xl:col-span-9 flex flex-col overflow-hidden">
-            <div className="flex-1 p-4 md:p-6 overflow-y-auto grid grid-cols-1 xl:grid-cols-3 gap-6">
-              <div className="xl:col-span-2">
-                 <DocumentDetails document={selectedDocument} onSign={handleSignDocument} />
-              </div>
-              <div className="xl:col-span-1">
-                <DocumentAnalytics documents={documents} />
-              </div>
-            </div>
+             <div className="flex-1 p-4 md:p-6 overflow-y-auto">
+                <Tabs defaultValue="details" className="h-full flex flex-col">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="details">Details</TabsTrigger>
+                    <TabsTrigger value="preview" disabled={!selectedDocument}>Preview</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="details" className="flex-grow">
+                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 h-full">
+                      <div className="xl:col-span-2">
+                        <DocumentDetails document={selectedDocument} onSign={handleSignDocument} isLoading={isLoading} />
+                      </div>
+                      <div className="xl:col-span-1">
+                        <DocumentAnalytics documents={documents} />
+                      </div>
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="preview" className="flex-grow bg-muted rounded-lg">
+                    <DocumentPreview document={selectedDocument} />
+                  </TabsContent>
+                </Tabs>
+             </div>
           </div>
         </div>
       </main>
