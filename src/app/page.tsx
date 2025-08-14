@@ -153,9 +153,12 @@ export default function Home() {
   };
 
   const filteredDocuments = useMemo(() => {
-    const baseList = userRole === 'Approver' 
-      ? documents.filter(doc => doc.isSharedForSignature)
-      : documents;
+    let baseList = documents;
+
+    if (userRole === 'Approver') {
+      // Approvers can see all documents, but we might want to sort or highlight documents awaiting their signature.
+      // For now, we show all, but we could add logic here later.
+    }
 
     if (filters.length === 0) {
       return baseList;
@@ -208,7 +211,7 @@ export default function Home() {
       <main className="flex-1 overflow-hidden">
         <div className="grid md:grid-cols-12 h-full">
           <div className="md:col-span-4 lg:col-span-3 xl:col-span-3 p-4 border-r overflow-y-auto flex flex-col gap-4">
-            {userRole === 'Uploader' && <DocumentUpload onFileUpload={onFileUpload} isLoading={isLoading} />}
+            <DocumentUpload onFileUpload={onFileUpload} isLoading={isLoading} />
             <DocumentFilters filters={filters} onFiltersChange={setFilters} />
             <DocumentList
               documents={filteredDocuments}

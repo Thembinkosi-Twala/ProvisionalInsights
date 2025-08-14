@@ -123,7 +123,7 @@ export default function DocumentDetails({ document, onShare, isLoading, userRole
 };
 
 
-  const canShare = userRole === 'Uploader' && !document.isSigned && !document.isSharedForSignature;
+  const canShare = !document.isSigned && !document.isSharedForSignature;
 
   return (
     <Card className="flex flex-col h-full">
@@ -174,7 +174,7 @@ export default function DocumentDetails({ document, onShare, isLoading, userRole
             </DialogContent>
             </Dialog>
         )}
-        {userRole === 'Uploader' && document.isSharedForSignature && !document.isSigned && (
+        {document.isSharedForSignature && !document.isSigned && (
              <Button variant="outline" className="w-full sm:w-auto" disabled>
                 <Share2 className="mr-2 h-4 w-4" />
                 Shared for Signature

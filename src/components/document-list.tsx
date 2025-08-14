@@ -67,10 +67,7 @@ export default function DocumentList({
             ) : (
               <div className="text-center py-10">
                 <p className="text-muted-foreground">
-                    {userRole === 'Approver' 
-                        ? "No documents are currently awaiting your approval."
-                        : "No documents match the current filters."
-                    }
+                    No documents uploaded yet.
                 </p>
               </div>
             )}
