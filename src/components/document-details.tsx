@@ -5,7 +5,7 @@ import React from 'react';
 import type { Document } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Info, Share2 } from 'lucide-react';
+import { Info, Share2, Loader2 } from 'lucide-react';
 import ComplianceCheck from './compliance-check';
 import { Button } from './ui/button';
 import {
@@ -27,6 +27,8 @@ interface DocumentDetailsProps {
 
 export default function DocumentDetails({ document, onSign, isLoading }: DocumentDetailsProps) {
   const { toast } = useToast();
+  const [isDownloading, setIsDownloading] = React.useState(false);
+
   if (!document) {
     return (
       <Card className="h-full flex items-center justify-center">
@@ -42,12 +44,14 @@ export default function DocumentDetails({ document, onSign, isLoading }: Documen
   }
 
   const handleDownload = () => {
+    setIsDownloading(true);
     const link = window.document.createElement('a');
     link.href = document.documentDataUri;
     link.download = document.isSigned ? `${document.fileName.split('.')[0]}_signed.pdf` : document.fileName;
     window.document.body.appendChild(link);
     link.click();
     window.document.body.removeChild(link);
+    setIsDownloading(false);
   }
 
   const handleShare = (recipients: string[], message: string) => {
@@ -80,11 +84,17 @@ export default function DocumentDetails({ document, onSign, isLoading }: Documen
         <ComplianceCheck document={document} />
       </CardContent>
       <CardFooter className="flex-col sm:flex-row gap-2 items-center">
-        <Button onClick={handleDownload} variant="outline" className="w-full sm:w-auto">Download</Button>
+        <Button onClick={handleDownload} variant="outline" className="w-full sm:w-auto" disabled={isDownloading}>
+            {isDownloading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Download
+        </Button>
         {!document.isSigned && (
             <Dialog>
                 <DialogTrigger asChild>
-                    <Button className="w-full sm:w-auto">Sign Document</Button>
+                    <Button className="w-full sm:w-auto" disabled={isLoading}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Sign Document
+                    </Button>
                 </DialogTrigger>
                 <DialogContent>
                     <DialogHeader>

@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow for signing PDF documents.
@@ -5,7 +6,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 const SignDocumentInputSchema = z.object({
   documentDataUri: z
@@ -51,19 +52,33 @@ const signDocumentFlow = ai.defineFlow(
 
       const pdfDoc = await PDFDocument.load(pdfBytes);
       const signatureImage = await pdfDoc.embedPng(signatureBytes);
+      const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
       const pages = pdfDoc.getPages();
       const firstPage = pages[0];
       
       const { width, height } = firstPage.getSize();
-      const imageWidth = 150; 
+      const imageWidth = 100; 
       const imageHeight = (imageWidth * signatureImage.height) / signatureImage.width;
+      const padding = 50;
       
       firstPage.drawImage(signatureImage, {
-        x: width - imageWidth - 50,
-        y: 50,
+        x: width - imageWidth - padding,
+        y: padding + 20,
         width: imageWidth,
         height: imageHeight,
+      });
+
+      const timestamp = new Date().toUTCString();
+      const verificationText = `Verified by Provincial Insights\n${timestamp}`;
+
+      firstPage.drawText(verificationText, {
+          x: width - imageWidth - padding - 2,
+          y: padding,
+          size: 8,
+          font: helveticaFont,
+          color: rgb(0.2, 0.2, 0.2),
+          lineHeight: 12,
       });
 
       const signedPdfBytes = await pdfDoc.save();
