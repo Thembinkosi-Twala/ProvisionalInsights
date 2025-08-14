@@ -13,13 +13,14 @@ const DocumentSchema = z.object({
     fileName: z.string(),
     documentDataUri: z.string(),
     isSigned: z.boolean(),
+    isSharedForSignature: z.boolean().optional(),
     title: z.string(),
     author: z.string(),
     dateCreated: z.string(),
     keywords: z.array(z.string()),
     summary: z.string(),
-    complianceStatus: z.string(),
-    complianceReport: z.string(),
+    status: z.string(),
+    report: z.string(),
 });
 
 const GenerateComplianceReportInputSchema = z.object({
@@ -53,7 +54,7 @@ const generateComplianceReportPrompt = ai.definePrompt({
         - Author: {{author}}
         - Created: {{dateCreated}}
         - Summary: {{summary}}
-        - Status: {{complianceStatus}} ({{complianceReport}})
+        - Status: {{status}} ({{report}})
         - Signed: {{#if isSigned}}Yes{{else}}No{{/if}}
     {{/each}}
     `,

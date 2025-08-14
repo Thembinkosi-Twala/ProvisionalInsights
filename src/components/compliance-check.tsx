@@ -17,7 +17,7 @@ interface ComplianceCheckProps {
 }
 
 export default function ComplianceCheck({ document }: ComplianceCheckProps) {
-  const isCompliant = document.complianceStatus === 'Compliant';
+  const isCompliant = document.status === 'Compliant';
 
   return (
     <div className="space-y-2">
@@ -35,11 +35,11 @@ export default function ComplianceCheck({ document }: ComplianceCheckProps) {
                 ) : (
                   <ShieldAlert className="mr-2 h-4 w-4" />
                 )}
-                {document.complianceStatus}
+                {document.status}
               </Badge>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{document.complianceReport}</p>
+              <p>{document.report}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

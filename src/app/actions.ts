@@ -22,8 +22,8 @@ export async function handleDocumentUpload(dataUri: string, fileName: string): P
       fileName,
       documentDataUri: dataUri,
       isSigned: false,
-      complianceStatus: compliance.status,
-      complianceReport: compliance.report,
+      status: compliance.status,
+      report: compliance.report,
     };
     return { data: document };
   } catch (e) {
