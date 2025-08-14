@@ -5,7 +5,7 @@ import React from 'react';
 import type { Document } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Info } from 'lucide-react';
+import { Info, Share2 } from 'lucide-react';
 import ComplianceCheck from './compliance-check';
 import { Button } from './ui/button';
 import {
@@ -16,6 +16,8 @@ import {
     DialogTrigger,
   } from '@/components/ui/dialog';
 import SignatureUpload from './signature-pad';
+import ShareDocumentDialog from './share-document-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface DocumentDetailsProps {
   document: Document | undefined;
@@ -24,6 +26,7 @@ interface DocumentDetailsProps {
 }
 
 export default function DocumentDetails({ document, onSign, isLoading }: DocumentDetailsProps) {
+  const { toast } = useToast();
   if (!document) {
     return (
       <Card className="h-full flex items-center justify-center">
@@ -45,6 +48,14 @@ export default function DocumentDetails({ document, onSign, isLoading }: Documen
     window.document.body.appendChild(link);
     link.click();
     window.document.body.removeChild(link);
+  }
+
+  const handleShare = (recipients: string[], message: string) => {
+    console.log('Sharing with:', recipients, 'Message:', message);
+    toast({
+      title: 'Document Shared',
+      description: 'The document has been sent for signature.',
+    });
   }
 
   return (
@@ -83,6 +94,20 @@ export default function DocumentDetails({ document, onSign, isLoading }: Documen
                 </DialogContent>
             </Dialog>
         )}
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="w-full sm:w-auto">
+              <Share2 className="mr-2 h-4 w-4" />
+              Share
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Share for Signature</DialogTitle>
+            </DialogHeader>
+            <ShareDocumentDialog onShare={handleShare} />
+          </DialogContent>
+        </Dialog>
       </CardFooter>
     </Card>
   );
