@@ -59,8 +59,9 @@ export default function Home() {
         }
 
         if (result.data) {
-          setDocuments(prev => [result.data!, ...prev]);
-          setSelectedDocumentId(result.data!.id);
+          const newDoc = { ...result.data, createdAt: new Date().toISOString() };
+          setDocuments(prev => [newDoc, ...prev]);
+          setSelectedDocumentId(newDoc.id);
         }
         setIsLoading(false);
       };
@@ -82,7 +83,7 @@ export default function Home() {
         setProcessingDocumentId(documentId);
         setDocuments(prev =>
             prev.map(doc =>
-                doc.id === documentId ? { ...doc, isSharedForSignature: true } : doc
+                doc.id === documentId ? { ...doc, isSharedForSignature: true, sharedAt: new Date().toISOString() } : doc
             )
         );
         toast({
@@ -104,7 +105,12 @@ export default function Home() {
         throw new Error(result.error);
       }
       if (result.signedDocumentUri) {
-        const signedDoc = { ...originalDocument, documentDataUri: result.signedDocumentUri!, isSigned: true };
+        const signedDoc = { 
+            ...originalDocument, 
+            documentDataUri: result.signedDocumentUri!, 
+            isSigned: true,
+            signedAt: new Date().toISOString(),
+        };
         
         setDocuments(prev =>
           prev.map(doc =>
@@ -212,7 +218,7 @@ export default function Home() {
               userRole={userRole}
             />
           </div>
-          <div className="md:col-span-8 lg:col-span-9 xl:col-span-9 flex flex-col overflow-hidden">
+          <div className="md:col-span-8 lg:col-span-9 flex flex-col overflow-hidden">
              <div className="flex-1 p-4 md:p-6 overflow-y-auto">
                 <Tabs defaultValue="details" className="h-full flex flex-col">
                   <TabsList className="mb-4">
@@ -255,3 +261,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

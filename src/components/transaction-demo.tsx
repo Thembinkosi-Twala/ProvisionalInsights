@@ -2,15 +2,16 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FileText, Users, Shield, CheckCircle, AlertCircle, Clock, Lock, Eye, Download, RefreshCw, Search, Info, XCircle, ChevronRight, Send, Loader2, History } from 'lucide-react';
+import { FileText, Users, Shield, CheckCircle, AlertCircle, Clock, Lock, Eye, Download, RefreshCw, Search, Info, XCircle, ChevronRight, Send, Loader2, History, FileUp, Share2 } from 'lucide-react';
 import type { Document } from '@/lib/types';
 import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import SignatureUpload from './signature-pad';
 import { useToast } from '@/hooks/use-toast';
+import { Separator } from './ui/separator';
 
 type Step = {
     id: string;
@@ -162,64 +163,118 @@ const TransactionDemo = ({ document, onSignDocument, onShareDocument, userRole, 
         );
     };
 
+     const renderAuditTrail = () => {
+        if (!document) return null;
+
+        const trail = [];
+        if (document.createdAt) {
+            trail.push({ icon: FileUp, text: 'Document Created by Uploader', timestamp: document.createdAt });
+        }
+        if (document.sharedAt) {
+            trail.push({ icon: Share2, text: 'Shared for Signature by Uploader', timestamp: document.sharedAt });
+        }
+        if (document.signedAt) {
+            trail.push({ icon: Lock, text: 'Digitally Signed by Approver', timestamp: document.signedAt });
+        }
+
+        return (
+            <div className="space-y-4">
+                {trail.map((item, index) => (
+                    <div key={index} className="flex items-start gap-4">
+                        <div className="flex flex-col items-center">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                <item.icon className="h-4 w-4" />
+                            </div>
+                            {index < trail.length - 1 && <div className="w-px h-8 bg-border" />}
+                        </div>
+                        <div>
+                            <p className="font-medium text-foreground">{item.text}</p>
+                            <p className="text-sm text-muted-foreground">{new Date(item.timestamp).toLocaleString()}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
     if (!document) {
         return renderNoDocumentState();
     }
 
     return (
-        <div className="space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center">
-                        <Clock className="mr-3 text-primary" />
-                        Workflow Progress
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="overflow-x-auto pb-4">
-                    <div className="flex items-center gap-2">
-                        {steps.map((step, index) => {
-                            const Icon = step.icon;
-                            const status = step.getStatus(document);
-                            const statusStyles = {
-                                'pending': { border: 'border-border', bg: 'bg-muted/50', iconBg: 'bg-muted-foreground/20', iconText: 'text-muted-foreground' },
-                                'in-progress': { border: 'border-primary', bg: 'bg-primary/10', iconBg: 'bg-primary', iconText: 'text-primary-foreground' },
-                                'completed': { border: 'border-green-500', bg: 'bg-green-500/10', iconBg: 'bg-green-500', iconText: 'text-white' },
-                                'error': { border: 'border-destructive', bg: 'bg-destructive/10', iconBg: 'bg-destructive', iconText: 'text-destructive-foreground' },
-                            };
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div className="xl:col-span-2 space-y-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center">
+                            <Clock className="mr-3 text-primary" />
+                            Workflow Progress
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="overflow-x-auto pb-4">
+                        <div className="flex items-center gap-2">
+                            {steps.map((step, index) => {
+                                const Icon = step.icon;
+                                const status = step.getStatus(document);
+                                const statusStyles = {
+                                    'pending': { border: 'border-border', bg: 'bg-muted/50', iconBg: 'bg-muted-foreground/20', iconText: 'text-muted-foreground' },
+                                    'in-progress': { border: 'border-primary', bg: 'bg-primary/10', iconBg: 'bg-primary', iconText: 'text-primary-foreground' },
+                                    'completed': { border: 'border-green-500', bg: 'bg-green-500/10', iconBg: 'bg-green-500', iconText: 'text-white' },
+                                    'error': { border: 'border-destructive', bg: 'bg-destructive/10', iconBg: 'bg-destructive', iconText: 'text-destructive-foreground' },
+                                };
 
-                            return (
-                                <React.Fragment key={step.id}>
-                                    <div className={`flex items-center p-3 rounded-lg border-2 transition-all w-48 flex-shrink-0 ${statusStyles[status].border} ${statusStyles[status].bg}`}>
-                                        <div className={`flex items-center justify-center w-8 h-8 rounded-full mr-3 flex-shrink-0 ${statusStyles[status].iconBg} ${statusStyles[status].iconText}`}>
-                                            {status === 'error' ? <XCircle size={18} /> : <Icon size={18} />}
+                                return (
+                                    <React.Fragment key={step.id}>
+                                        <div className={`flex items-center p-3 rounded-lg border-2 transition-all w-48 flex-shrink-0 ${statusStyles[status].border} ${statusStyles[status].bg}`}>
+                                            <div className={`flex items-center justify-center w-8 h-8 rounded-full mr-3 flex-shrink-0 ${statusStyles[status].iconBg} ${statusStyles[status].iconText}`}>
+                                                {status === 'error' ? <XCircle size={18} /> : <Icon size={18} />}
+                                            </div>
+                                            <div className="flex-1 overflow-hidden">
+                                                <h3 className="font-semibold text-sm truncate">{step.name}</h3>
+                                                <p className="text-xs text-muted-foreground capitalize">
+                                                    {status.replace('-', ' ')}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div className="flex-1 overflow-hidden">
-                                            <h3 className="font-semibold text-sm truncate">{step.name}</h3>
-                                            <p className="text-xs text-muted-foreground capitalize">
-                                                {status.replace('-', ' ')}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    {index < steps.length - 1 && (
-                                        <ChevronRight className="h-6 w-6 text-muted-foreground flex-shrink-0" />
-                                    )}
-                                </React.Fragment>
-                            );
-                        })}
-                    </div>
-                </CardContent>
-            </Card>
+                                        {index < steps.length - 1 && (
+                                            <ChevronRight className="h-6 w-6 text-muted-foreground flex-shrink-0" />
+                                        )}
+                                    </React.Fragment>
+                                );
+                            })}
+                        </div>
+                    </CardContent>
+                </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Interactive Demo Controls</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {renderControls()}
-                </CardContent>
-            </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Interactive Demo Controls</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {renderControls()}
+                    </CardContent>
+                </Card>
+            </div>
+            <div className="xl:col-span-1">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <History />
+                            Immutable Audit Trail
+                        </CardTitle>
+                        <CardDescription>
+                            A permanent, secure log of all actions taken on this document.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {renderAuditTrail()}
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 };
 
 export default TransactionDemo;
+
+    

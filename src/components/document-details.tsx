@@ -5,7 +5,7 @@ import React from 'react';
 import type { Document } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Info, Share2, Loader2, ShieldCheck, Signature, History, Landmark, BarChart2 } from 'lucide-react';
+import { Info, Share2, Loader2, ShieldCheck, Signature, History, Landmark, BarChart2, FileUp, Lock } from 'lucide-react';
 import ComplianceCheck from './compliance-check';
 import { Button } from './ui/button';
 import {
@@ -88,6 +88,40 @@ export default function DocumentDetails({ document, onShare, isLoading, userRole
         onShare(document.id);
     }
   }
+  
+  const renderAuditTrail = () => {
+    const trail = [];
+    if (document.createdAt) {
+        trail.push({ icon: FileUp, text: 'Document Created by Uploader', timestamp: document.createdAt });
+    }
+    if (document.sharedAt) {
+        trail.push({ icon: Share2, text: 'Shared for Signature by Uploader', timestamp: document.sharedAt });
+    }
+    if (document.signedAt) {
+        trail.push({ icon: Lock, text: 'Digitally Signed by Approver', timestamp: document.signedAt });
+    }
+
+    return (
+        <div className="space-y-4">
+             <h4 className="font-semibold text-foreground">Audit Trail</h4>
+            {trail.map((item, index) => (
+                <div key={index} className="flex items-start gap-4">
+                    <div className="flex flex-col items-center">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                            <item.icon className="h-4 w-4" />
+                        </div>
+                        {index < trail.length - 1 && <div className="w-px h-6 bg-border" />}
+                    </div>
+                    <div>
+                        <p className="font-medium text-sm text-foreground">{item.text}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(item.timestamp).toLocaleString()}</p>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
 
   const canShare = userRole === 'Uploader' && !document.isSigned && !document.isSharedForSignature;
 
@@ -114,16 +148,7 @@ export default function DocumentDetails({ document, onShare, isLoading, userRole
         {document.isSigned && (
             <div>
                 <Separator className="my-4" />
-                <div className="space-y-2">
-                    <h4 className="font-semibold text-foreground">Audit Trail</h4>
-                    <div className="flex items-center gap-2">
-                        <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-white">
-                            <ShieldCheck className="mr-2 h-4 w-4" />
-                            Verified
-                        </Badge>
-                        <span className="text-sm text-muted-foreground">The audit trail for this document is secure and immutable.</span>
-                    </div>
-                </div>
+                {renderAuditTrail()}
             </div>
         )}
       </CardContent>
@@ -159,3 +184,5 @@ export default function DocumentDetails({ document, onShare, isLoading, userRole
     </Card>
   );
 }
+
+    

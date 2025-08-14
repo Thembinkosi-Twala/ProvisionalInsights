@@ -7,4 +7,9 @@ export interface Document extends ExtractDocumentMetadataOutput, ComplianceCheck
   documentDataUri: string;
   isSigned: boolean;
   isSharedForSignature?: boolean;
+  createdAt?: string;
+  sharedAt?: string;
+  signedAt?: string;
 }
+
+    
