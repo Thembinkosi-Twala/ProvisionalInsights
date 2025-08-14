@@ -1,25 +1,29 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
+import type { Document } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { Document } from '@/lib/types';
-import { ShieldCheck, Info, Pencil, Download, CheckCircle, Loader2 } from 'lucide-react';
-import { Button } from './ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import SignatureUpload from './signature-pad';
+import { Info } from 'lucide-react';
 import ComplianceCheck from './compliance-check';
+import { Button } from './ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+  } from '@/components/ui/dialog';
+import SignatureUpload from './signature-pad';
 
 interface DocumentDetailsProps {
   document: Document | undefined;
-  onSign: (documentId: string, signatureDataUrl: string) => Promise<void>;
+  onSign: (documentId: string, signatureDataUrl: string) => void;
   isLoading: boolean;
 }
 
 export default function DocumentDetails({ document, onSign, isLoading }: DocumentDetailsProps) {
-  const [isSigning, setIsSigning] = useState(false);
-
   if (!document) {
     return (
       <Card className="h-full flex items-center justify-center">
@@ -27,22 +31,17 @@ export default function DocumentDetails({ document, onSign, isLoading }: Documen
           <Info className="mx-auto h-12 w-12 text-muted-foreground" />
           <h3 className="mt-4 text-lg font-medium text-foreground">No Document Selected</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Upload a new document or select one from the list to see its details.
+            Select a document to view its details.
           </p>
         </CardContent>
       </Card>
     );
   }
 
-  const handleSaveSignature = async (signatureDataUrl: string) => {
-    await onSign(document.id, signatureDataUrl);
-    setIsSigning(false);
-  }
-
   const handleDownload = () => {
-    const link = window.document.createElement("a");
+    const link = window.document.createElement('a');
     link.href = document.documentDataUri;
-    link.download = document.fileName;
+    link.download = document.isSigned ? `${document.fileName.split('.')[0]}_signed.pdf` : document.fileName;
     window.document.body.appendChild(link);
     link.click();
     window.document.body.removeChild(link);
@@ -69,25 +68,21 @@ export default function DocumentDetails({ document, onSign, isLoading }: Documen
         </div>
         <ComplianceCheck document={document} />
       </CardContent>
-      <CardFooter className="flex flex-wrap gap-2">
-         <Dialog open={isSigning} onOpenChange={setIsSigning}>
-            <DialogTrigger asChild>
-                <Button disabled={isLoading}>
-                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Pencil className="mr-2 h-4 w-4" />}
-                    {document.isSigned ? 'Re-Sign Document' : 'Sign Document'}
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Upload Signature</DialogTitle>
-                </DialogHeader>
-                <SignatureUpload onSave={handleSaveSignature} />
-            </DialogContent>
-        </Dialog>
-        <Button variant="outline" onClick={handleDownload}>
-            <Download className="mr-2 h-4 w-4" />
-            Download
-        </Button>
+      <CardFooter className="flex-col sm:flex-row gap-2 items-center">
+        <Button onClick={handleDownload} variant="outline" className="w-full sm:w-auto">Download</Button>
+        {!document.isSigned && (
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button className="w-full sm:w-auto">Sign Document</Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Add Your Signature</DialogTitle>
+                    </DialogHeader>
+                    <SignatureUpload onSave={(signature) => onSign(document.id, signature)} />
+                </DialogContent>
+            </Dialog>
+        )}
       </CardFooter>
     </Card>
   );
