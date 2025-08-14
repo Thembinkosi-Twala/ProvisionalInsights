@@ -13,7 +13,6 @@ interface DocumentListProps {
   selectedDocumentId: string | null;
   onSelectDocument: (id: string) => void;
   processingDocumentId?: string | null;
-  userRole: string | null;
 }
 
 export default function DocumentList({
@@ -21,7 +20,6 @@ export default function DocumentList({
   selectedDocumentId,
   onSelectDocument,
   processingDocumentId,
-  userRole,
 }: DocumentListProps) {
 
   return (

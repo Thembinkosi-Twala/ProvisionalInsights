@@ -23,10 +23,9 @@ interface DocumentDetailsProps {
   document: Document | undefined;
   onShare: (documentId: string) => void;
   isLoading: boolean;
-  userRole: string | null;
 }
 
-export default function DocumentDetails({ document, onShare, isLoading, userRole }: DocumentDetailsProps) {
+export default function DocumentDetails({ document, onShare, isLoading }: DocumentDetailsProps) {
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = React.useState(false);
 
@@ -184,5 +183,3 @@ export default function DocumentDetails({ document, onShare, isLoading, userRole
     </Card>
   );
 }
-
-    

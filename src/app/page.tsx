@@ -155,11 +155,6 @@ export default function Home() {
   const filteredDocuments = useMemo(() => {
     let baseList = documents;
 
-    if (userRole === 'Approver') {
-      // Approvers can see all documents, but we might want to sort or highlight documents awaiting their signature.
-      // For now, we show all, but we could add logic here later.
-    }
-
     if (filters.length === 0) {
       return baseList;
     }
@@ -183,7 +178,7 @@ export default function Home() {
         return false;
       });
     });
-  }, [documents, filters, userRole]);
+  }, [documents, filters]);
 
 
   const selectedDocument = useMemo(
@@ -218,7 +213,6 @@ export default function Home() {
               selectedDocumentId={selectedDocumentId}
               onSelectDocument={setSelectedDocumentId}
               processingDocumentId={processingDocumentId}
-              userRole={userRole}
             />
           </div>
           <div className="md:col-span-8 lg:col-span-9 flex flex-col overflow-hidden">
@@ -236,7 +230,6 @@ export default function Home() {
                             document={selectedDocument} 
                             onShare={handleShareDocument} 
                             isLoading={processingDocumentId === selectedDocumentId}
-                            userRole={userRole}
                         />
                       </div>
                       <div className="xl:col-span-1">
@@ -252,7 +245,6 @@ export default function Home() {
                       document={selectedDocument}
                       onSignDocument={handleSignDocument}
                       onShareDocument={handleShareDocument}
-                      userRole={userRole}
                       isLoading={processingDocumentId === selectedDocumentId}
                     />
                   </TabsContent>
@@ -264,5 +256,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

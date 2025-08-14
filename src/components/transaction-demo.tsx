@@ -26,11 +26,10 @@ interface TransactionDemoProps {
     document: Document | undefined;
     onSignDocument: (documentId: string, signature: string) => Promise<boolean | undefined>;
     onShareDocument: (documentId: string) => void;
-    userRole: string | null;
     isLoading: boolean;
 }
 
-const TransactionDemo = ({ document, onSignDocument, onShareDocument, userRole, isLoading }: TransactionDemoProps) => {
+const TransactionDemo = ({ document, onSignDocument, onShareDocument, isLoading }: TransactionDemoProps) => {
     const [isSignDialogOpen, setIsSignDialogOpen] = useState(false);
     const { toast } = useToast();
 
@@ -112,7 +111,7 @@ const TransactionDemo = ({ document, onSignDocument, onShareDocument, userRole, 
             );
         }
 
-        const canShare = userRole === 'Uploader' && !document.isSharedForSignature;
+        const canShare = !document.isSharedForSignature && !document.isSigned;
         if (canShare) {
             return (
                 <div className="text-center">
@@ -128,7 +127,7 @@ const TransactionDemo = ({ document, onSignDocument, onShareDocument, userRole, 
             )
         }
         
-        const canSign = userRole === 'Approver' && document.isSharedForSignature && !document.isSigned;
+        const canSign = document.isSharedForSignature && !document.isSigned;
         if (canSign) {
             return (
                  <div className="text-center">
@@ -155,10 +154,6 @@ const TransactionDemo = ({ document, onSignDocument, onShareDocument, userRole, 
             <div className="text-center text-muted-foreground p-4 bg-muted/50 rounded-lg">
                 <Info className="mx-auto mb-2" />
                 <p>The workflow is awaiting the next action.</p>
-                <p className="text-sm">
-                    {userRole === 'Uploader' && 'Waiting for the approver to sign.'}
-                    {userRole === 'Approver' && 'This document is not yet ready for your action.'}
-                </p>
             </div>
         );
     };
@@ -168,13 +163,13 @@ const TransactionDemo = ({ document, onSignDocument, onShareDocument, userRole, 
 
         const trail = [];
         if (document.createdAt) {
-            trail.push({ icon: FileUp, text: 'Document Created by Uploader', timestamp: document.createdAt });
+            trail.push({ icon: FileUp, text: 'Document Created', timestamp: document.createdAt });
         }
         if (document.sharedAt) {
-            trail.push({ icon: Share2, text: 'Shared for Signature by Uploader', timestamp: document.sharedAt });
+            trail.push({ icon: Share2, text: 'Shared for Signature', timestamp: document.sharedAt });
         }
         if (document.signedAt) {
-            trail.push({ icon: Lock, text: 'Digitally Signed by Approver', timestamp: document.signedAt });
+            trail.push({ icon: Lock, text: 'Digitally Signed', timestamp: document.signedAt });
         }
 
         return (
@@ -276,5 +271,3 @@ const TransactionDemo = ({ document, onSignDocument, onShareDocument, userRole, 
 };
 
 export default TransactionDemo;
-
-    
