@@ -6,7 +6,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { Document } from '@/lib/types';
-import { BarChart2, Info, FileText, Tags, Loader2 } from 'lucide-react';
+import { BarChart2, Info, FileText, Tags, Loader2, ShieldCheck, Clock, FileSignature } from 'lucide-react';
 import { Button } from './ui/button';
 import ComplianceReportDialog from './compliance-report-dialog';
 import { generateComplianceReport } from '@/app/actions';
@@ -50,34 +50,32 @@ export default function DocumentAnalytics({ documents }: DocumentAnalyticsProps)
     }
   }
 
-  const { keywordData, totalDocuments, totalKeywords } = useMemo(() => {
+  const { complianceData, totalDocuments, compliant, awaitingSignature, signed } = useMemo(() => {
     if (documents.length === 0) {
-      return { keywordData: [], totalDocuments: 0, totalKeywords: 0 };
+      return { complianceData: [], totalDocuments: 0, compliant: 0, awaitingSignature: 0, signed: 0 };
     }
 
-    const allKeywords = documents.flatMap(doc => doc.keywords);
-
-    const keywordCounts = allKeywords.reduce<Record<string, number>>((acc, keyword) => {
-        const lowerKeyword = keyword.toLowerCase();
-        acc[lowerKeyword] = (acc[lowerKeyword] || 0) + 1;
+    const complianceCounts = documents.reduce<Record<string, number>>((acc, doc) => {
+        acc[doc.status] = (acc[doc.status] || 0) + 1;
         return acc;
-      }, {});
-
-    const sortedKeywords = Object.entries(keywordCounts)
-      .map(([keyword, count]) => ({ keyword, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10);
+    }, {});
     
+    const complianceChartData = Object.entries(complianceCounts)
+      .map(([status, count]) => ({ status, count }))
+      .sort((a, b) => b.count - a.count);
+
     return {
-        keywordData: sortedKeywords,
+        complianceData: complianceChartData,
         totalDocuments: documents.length,
-        totalKeywords: new Set(allKeywords.map(k => k.toLowerCase())).size,
+        compliant: complianceCounts['Compliant'] || 0,
+        awaitingSignature: documents.filter(doc => doc.isSharedForSignature && !doc.isSigned).length,
+        signed: documents.filter(doc => doc.isSigned).length,
     }
   }, [documents]);
 
   return (
     <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 grid-cols-2">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Documents</CardTitle>
@@ -89,11 +87,29 @@ export default function DocumentAnalytics({ documents }: DocumentAnalyticsProps)
             </Card>
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Unique Keywords</CardTitle>
-                    <Tags className="h-4 w-4 text-muted-foreground" />
+                    <CardTitle className="text-sm font-medium">Compliant</CardTitle>
+                    <ShieldCheck className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{totalKeywords}</div>
+                    <div className="text-2xl font-bold">{compliant}</div>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Awaiting Signature</CardTitle>
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{awaitingSignature}</div>
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Signed & Archived</CardTitle>
+                    <FileSignature className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{signed}</div>
                 </CardContent>
             </Card>
         </div>
@@ -103,9 +119,9 @@ export default function DocumentAnalytics({ documents }: DocumentAnalyticsProps)
                 <div>
                     <CardTitle className="flex items-center gap-2">
                         <BarChart2 className="h-5 w-5" />
-                        Keyword Analysis
+                        Compliance Status
                     </CardTitle>
-                    <CardDescription>Top 10 keywords across all documents</CardDescription>
+                    <CardDescription>Breakdown of documents by compliance status</CardDescription>
                 </div>
                 <ComplianceReportDialog 
                     report={report} 
@@ -125,18 +141,18 @@ export default function DocumentAnalytics({ documents }: DocumentAnalyticsProps)
             </div>
         </CardHeader>
         <CardContent>
-            {keywordData.length > 0 ? (
-            <ChartContainer config={chartConfig} className="w-full h-[300px]">
+            {complianceData.length > 0 ? (
+            <ChartContainer config={chartConfig} className="w-full h-[250px]">
                 <ResponsiveContainer>
-                <BarChart data={keywordData} layout="vertical" margin={{ left: 20, right: 20 }}>
+                <BarChart data={complianceData} layout="vertical" margin={{ left: 20, right: 20 }}>
                     <CartesianGrid horizontal={false} />
                     <YAxis
-                    dataKey="keyword"
+                    dataKey="status"
                     type="category"
                     tickLine={false}
                     axisLine={false}
                     tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
-                    width={80}
+                    width={110}
                     />
                     <XAxis dataKey="count" type="number" hide />
                     <ChartTooltip
@@ -148,10 +164,10 @@ export default function DocumentAnalytics({ documents }: DocumentAnalyticsProps)
                 </ResponsiveContainer>
             </ChartContainer>
             ) : (
-            <div className="h-[300px] flex flex-col items-center justify-center text-center">
+            <div className="h-[250px] flex flex-col items-center justify-center text-center">
                 <Info className="h-10 w-10 text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">No analytics to display.</p>
-                <p className="text-sm text-muted-foreground/80">Upload documents to see keyword trends.</p>
+                <p className="text-sm text-muted-foreground/80">Upload documents to see compliance trends.</p>
             </div>
             )}
         </CardContent>
