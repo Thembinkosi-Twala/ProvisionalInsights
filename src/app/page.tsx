@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { signDocument } from './actions';
 import DocumentPreview from '@/components/document-preview';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import TransactionDemo from '@/components/transaction-demo';
 
 export default function Home() {
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -167,6 +168,7 @@ export default function Home() {
                   <TabsList className="mb-4">
                     <TabsTrigger value="details">Details</TabsTrigger>
                     <TabsTrigger value="preview" disabled={!selectedDocument}>Preview</TabsTrigger>
+                    <TabsTrigger value="demo">Transaction Demo</TabsTrigger>
                   </TabsList>
                   <TabsContent value="details" className="flex-grow">
                     <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 h-full">
@@ -180,6 +182,9 @@ export default function Home() {
                   </TabsContent>
                   <TabsContent value="preview" className="flex-grow bg-muted rounded-lg">
                     <DocumentPreview document={selectedDocument} />
+                  </TabsContent>
+                  <TabsContent value="demo" className="flex-grow">
+                    <TransactionDemo />
                   </TabsContent>
                 </Tabs>
              </div>
