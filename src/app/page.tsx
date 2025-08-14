@@ -31,13 +31,20 @@ export default function Home() {
         const result = await handleDocumentUpload(dataUri, file.name);
 
         if (result.error) {
-          throw new Error(result.error);
+          toast({
+            variant: 'destructive',
+            title: 'Upload Failed',
+            description: `Could not process the document. ${result.error}`,
+          });
+          setIsLoading(false);
+          return;
         }
 
         if (result.data) {
           setDocuments(prev => [result.data!, ...prev]);
           setSelectedDocumentId(result.data!.id);
         }
+        setIsLoading(false);
       };
       reader.onerror = (error) => {
         throw error;
@@ -49,7 +56,6 @@ export default function Home() {
         title: 'Upload Failed',
         description: `Could not process the document. ${errorMessage}`,
       });
-    } finally {
       setIsLoading(false);
     }
   };
