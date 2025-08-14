@@ -74,6 +74,18 @@ export default function Home() {
     }
   };
 
+    const handleShareDocument = (documentId: string) => {
+        setDocuments(prev =>
+            prev.map(doc =>
+                doc.id === documentId ? { ...doc, isSharedForSignature: true } : doc
+            )
+        );
+        toast({
+            title: 'Document Shared',
+            description: 'The document has been sent for signature.',
+        });
+    };
+
   const handleSignDocument = async (documentId: string, signatureDataUrl: string) => {
     const originalDocument = documents.find(doc => doc.id === documentId);
     if (!originalDocument) return;
@@ -192,7 +204,7 @@ export default function Home() {
                   <TabsContent value="details" className="flex-grow">
                     <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 h-full">
                       <div className="xl:col-span-2">
-                        <DocumentDetails document={selectedDocument} onSign={handleSignDocument} isLoading={isLoading} />
+                        <DocumentDetails document={selectedDocument} onShare={handleShareDocument} isLoading={isLoading} />
                       </div>
                       <div className="xl:col-span-1">
                         <DocumentAnalytics documents={documents} />

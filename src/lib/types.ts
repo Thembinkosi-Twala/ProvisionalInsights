@@ -6,4 +6,5 @@ export interface Document extends ExtractDocumentMetadataOutput, ComplianceCheck
   fileName: string;
   documentDataUri: string;
   isSigned: boolean;
+  isSharedForSignature?: boolean;
 }

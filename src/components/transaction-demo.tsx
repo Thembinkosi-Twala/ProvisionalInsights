@@ -78,20 +78,31 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
   useEffect(() => {
     handleRestart();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [document]);
+  }, [document?.id]);
 
   useEffect(() => {
+    if (document?.isSharedForSignature && stepStatuses[1] === 'pending') {
+        setStepStatuses(prev => {
+            const newStatuses = [...prev];
+            newStatuses[1] = 'in-progress';
+            return newStatuses;
+        });
+        addAuditEntry('Document Shared', `Document routed for signature by Finance Manager`);
+    }
+
     if (document?.isSigned) {
         setStepStatuses(prev => {
             const newStatuses = [...prev];
-            if (newStatuses[3] === 'in-progress') newStatuses[3] = 'completed';
+            if (newStatuses[3] === 'in-progress' || newStatuses[3] === 'completed') newStatuses[3] = 'completed';
             if (newStatuses[4] !== 'completed') newStatuses[4] = 'completed';
             return newStatuses;
         });
-      addAuditEntry('Document Storage', 'Signed document archived in SharePoint with immutable hash');
+        if (!auditTrail.some(e => e.action === 'Document Storage')) {
+            addAuditEntry('Document Storage', 'Signed document archived in SharePoint with immutable hash');
+        }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [document?.isSigned]);
+  }, [document?.isSigned, document?.isSharedForSignature]);
 
   const simulateMFA = () => {
     setIsProcessing(true);
@@ -158,8 +169,11 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
     initializeAuditTrail();
     if(document?.isSigned) {
         setStepStatuses(['completed', 'completed', 'completed', 'completed', 'completed']);
-    } else {
+    } else if (document?.isSharedForSignature) {
         setStepStatuses(['completed', 'in-progress', 'pending', 'pending', 'pending']);
+    }
+    else {
+        setStepStatuses(['completed', 'pending', 'pending', 'pending', 'pending']);
     }
   };
 

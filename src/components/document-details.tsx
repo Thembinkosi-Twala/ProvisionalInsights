@@ -20,11 +20,11 @@ import { useToast } from '@/hooks/use-toast';
 
 interface DocumentDetailsProps {
   document: Document | undefined;
-  onSign: (documentId: string, signatureDataUrl: string) => void;
+  onShare: (documentId: string) => void;
   isLoading: boolean;
 }
 
-export default function DocumentDetails({ document, onSign, isLoading }: DocumentDetailsProps) {
+export default function DocumentDetails({ document, onShare, isLoading }: DocumentDetailsProps) {
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = React.useState(false);
 
@@ -80,12 +80,11 @@ export default function DocumentDetails({ document, onSign, isLoading }: Documen
     setIsDownloading(false);
   }
 
-  const handleShare = (recipients: string[], message: string) => {
+  const handleShareSubmit = (recipients: string[], message: string) => {
     console.log('Sharing with:', recipients, 'Message:', message);
-    toast({
-      title: 'Document Shared',
-      description: 'The document has been sent for signature.',
-    });
+    if(document) {
+        onShare(document.id);
+    }
   }
 
   return (
@@ -117,16 +116,16 @@ export default function DocumentDetails({ document, onSign, isLoading }: Documen
         {!document.isSigned && (
             <Dialog>
             <DialogTrigger asChild>
-                <Button variant="default" className="w-full sm:w-auto">
+                <Button variant="default" className="w-full sm:w-auto" disabled={document.isSharedForSignature}>
                 <Share2 className="mr-2 h-4 w-4" />
-                Share for Signature
+                {document.isSharedForSignature ? 'Shared for Signature' : 'Share for Signature'}
                 </Button>
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Share for Signature</DialogTitle>
                 </DialogHeader>
-                <ShareDocumentDialog onShare={handleShare} />
+                <ShareDocumentDialog onShare={handleShareSubmit} />
             </DialogContent>
             </Dialog>
         )}
