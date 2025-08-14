@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ export default function DocumentUpload({ onFileUpload, isLoading }: DocumentUplo
     }
   }, [onFileUpload]);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     accept: {
       'application/pdf': ['.pdf'],
@@ -26,6 +26,8 @@ export default function DocumentUpload({ onFileUpload, isLoading }: DocumentUplo
       'text/plain': ['.txt'],
     },
     multiple: false,
+    noClick: true,
+    noKeyboard: true,
   });
 
   return (
@@ -46,7 +48,7 @@ export default function DocumentUpload({ onFileUpload, isLoading }: DocumentUplo
             <p className="text-xs text-muted-foreground/80">PDF, DOCX, TXT</p>
           </div>
         </div>
-        <Button disabled={isLoading} className="w-full mt-4">
+        <Button onClick={open} disabled={isLoading} className="w-full mt-4">
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
