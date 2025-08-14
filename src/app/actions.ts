@@ -3,6 +3,7 @@
 import { complianceCheck } from '@/ai/flows/compliance-check';
 import { extractDocumentMetadata } from '@/ai/flows/extract-document-metadata';
 import { signDocument as signDocumentFlow } from '@/ai/flows/sign-document';
+import { archiveDocument as archiveDocumentFlow } from '@/ai/flows/archive-document-flow';
 import type { Document } from '@/lib/types';
 import { randomUUID } from 'crypto';
 
@@ -37,5 +38,26 @@ export async function signDocument(documentDataUri: string, signatureDataUri: st
     } catch (e) {
         console.error(e);
         return { error: 'Failed to sign the document.' };
+    }
+}
+
+export async function archiveDocument(document: Document): Promise<{ error?: string }> {
+    try {
+        await archiveDocumentFlow({ 
+            documentId: document.id,
+            signedDocumentUri: document.documentDataUri,
+            fileName: document.fileName,
+            metadata: {
+                title: document.title,
+                author: document.author,
+                dateCreated: document.dateCreated,
+                keywords: document.keywords,
+                summary: document.summary,
+            }
+        });
+        return {};
+    } catch (e) {
+        console.error(e);
+        return { error: 'Failed to archive the document.' };
     }
 }

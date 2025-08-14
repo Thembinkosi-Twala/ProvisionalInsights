@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { handleDocumentUpload } from './actions';
+import { handleDocumentUpload, archiveDocument } from './actions';
 import { type Document } from '@/lib/types';
 import DocumentUpload from '@/components/document-upload';
 import DocumentList from '@/components/document-list';
@@ -71,15 +71,32 @@ export default function Home() {
         throw new Error(result.error);
       }
       if (result.signedDocumentUri) {
+        const signedDoc = { ...originalDocument, documentDataUri: result.signedDocumentUri!, isSigned: true };
+        
         setDocuments(prev =>
           prev.map(doc =>
-            doc.id === documentId ? { ...doc, documentDataUri: result.signedDocumentUri!, isSigned: true } : doc
+            doc.id === documentId ? signedDoc : doc
           )
         );
+
         toast({
             title: 'Document Signed',
             description: 'The signature has been embedded into the document.',
         });
+
+        const archiveResult = await archiveDocument(signedDoc);
+        if (archiveResult.error) {
+            toast({
+                variant: 'destructive',
+                title: 'Archiving Failed',
+                description: `Could not archive the document. ${archiveResult.error}`,
+            });
+        } else {
+            toast({
+                title: 'Document Archived',
+                description: 'The signed document has been sent for archiving.',
+            });
+        }
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
