@@ -39,12 +39,12 @@ export default function DocumentDetails({ document, onSign, isLoading }: Documen
   }
 
   const handleDownload = () => {
-    const link = document.createElement("a");
+    const link = window.document.createElement("a");
     link.href = document.documentDataUri;
     link.download = document.fileName;
-    document.body.appendChild(link);
+    window.document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    window.document.body.removeChild(link);
   }
 
   const isCompliant = !!document.title && !!document.summary;
