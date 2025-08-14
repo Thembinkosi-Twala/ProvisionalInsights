@@ -5,7 +5,7 @@ import React from 'react';
 import type { Document } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Info, Share2, Loader2 } from 'lucide-react';
+import { Info, Share2, Loader2, ShieldCheck, Signature, History, Landmark, BarChart2 } from 'lucide-react';
 import ComplianceCheck from './compliance-check';
 import { Button } from './ui/button';
 import {
@@ -31,15 +31,42 @@ export default function DocumentDetails({ document, onSign, isLoading }: Documen
 
   if (!document) {
     return (
-      <Card className="h-full flex items-center justify-center">
-        <CardContent className="text-center p-6">
-          <Info className="mx-auto h-12 w-12 text-muted-foreground" />
-          <h3 className="mt-4 text-lg font-medium text-foreground">No Document Selected</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Select a document to view its details.
-          </p>
-        </CardContent>
-      </Card>
+        <Card className="h-full flex flex-col items-center justify-center">
+            <CardHeader className="text-center">
+                <Info className="mx-auto h-12 w-12 text-muted-foreground" />
+                <CardTitle>No Document Selected</CardTitle>
+                <CardDescription>Upload or select a document to get started.</CardDescription>
+            </CardHeader>
+            <CardContent className="w-full max-w-md p-6">
+                <h3 className="mb-4 text-lg font-medium text-center text-foreground">Key Features</h3>
+                <ul className="space-y-3 text-sm text-muted-foreground">
+                    <li className="flex items-center gap-3">
+                        <ShieldCheck className="h-5 w-5 text-primary" />
+                        <span>MFA Authentication</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                        <Signature className="h-5 w-5 text-primary" />
+                        <span>PKI Digital Signatures</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                        <History className="h-5 w-5 text-primary" />
+                        <span>Immutable Audit Trail</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                        <Share2 className="h-5 w-5 text-primary" />
+                        <span>SharePoint Integration</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                        <Landmark className="h-5 w-5 text-primary" />
+                        <span>PFMA Compliance</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                        <BarChart2 className="h-5 w-5 text-primary" />
+                        <span>Real-time Analytics</span>
+                    </li>
+                </ul>
+            </CardContent>
+        </Card>
     );
   }
 
