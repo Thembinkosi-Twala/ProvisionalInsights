@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FileText, Users, Shield, CheckCircle, AlertCircle, Clock, Lock, Eye, Download, RefreshCw, Search, Info, XCircle, ChevronRight } from 'lucide-react';
+import { FileText, Users, Shield, CheckCircle, AlertCircle, Clock, Lock, Eye, Download, RefreshCw, Search, Info, XCircle, ChevronRight, Send } from 'lucide-react';
 import type { Document } from '@/lib/types';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -36,7 +36,7 @@ interface TransactionDemoProps {
 type StepStatus = 'pending' | 'in-progress' | 'completed' | 'error';
 
 const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => {
-  const [stepStatuses, setStepStatuses] = useState<StepStatus[]>(['completed', 'pending', 'pending', 'pending', 'pending']);
+  const [stepStatuses, setStepStatuses] = useState<StepStatus[]>(['completed', 'pending', 'pending', 'pending', 'pending', 'pending']);
   const [isProcessing, setIsProcessing] = useState(false);
   const [mfaCode, setMfaCode] = useState('');
   const [mfaError, setMfaError] = useState('');
@@ -50,6 +50,7 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
     { id: 'upload', name: 'Document Upload', icon: FileText },
     { id: 'mfa', name: 'MFA Authentication', icon: Shield },
     { id: 'approval', name: 'Approval Routing', icon: Users },
+    { id: 'notify', name: 'Notify Approver', icon: Send },
     { id: 'signature', name: 'PKI Digital Signature', icon: Lock },
     { id: 'storage', name: 'Secure Storage', icon: CheckCircle }
   ];
@@ -93,8 +94,8 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
     if (document?.isSigned) {
         setStepStatuses(prev => {
             const newStatuses = [...prev];
-            if (newStatuses[3] === 'in-progress' || newStatuses[3] === 'completed') newStatuses[3] = 'completed';
-            if (newStatuses[4] !== 'completed') newStatuses[4] = 'completed';
+            if (newStatuses[4] === 'in-progress' || newStatuses[4] === 'completed') newStatuses[4] = 'completed';
+            if (newStatuses[5] !== 'completed') newStatuses[5] = 'completed';
             return newStatuses;
         });
         if (!auditTrail.some(e => e.action === 'Document Storage')) {
@@ -114,7 +115,7 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
     });
     setTimeout(() => {
       if (mfaCode === '123456') {
-        setStepStatuses(['completed', 'completed', 'in-progress', 'pending', 'pending']);
+        setStepStatuses(['completed', 'completed', 'in-progress', 'pending', 'pending', 'pending']);
         addAuditEntry('MFA Authentication', 'SMS OTP verified successfully');
       } else {
         setMfaError('Incorrect MFA code. Please try again.');
@@ -131,12 +132,13 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
 
   const simulateApproval = () => {
     setIsProcessing(true);
-    setStepStatuses(['completed', 'completed', 'in-progress', 'pending', 'pending']);
+    setStepStatuses(['completed', 'completed', 'in-progress', 'pending', 'pending', 'pending']);
     setTimeout(() => {
       addAuditEntry('Approval Routing', 'Document routed to CFO for approval');
+      setStepStatuses(['completed', 'completed', 'completed', 'in-progress', 'pending', 'pending']);
       setTimeout(() => {
-        setStepStatuses(['completed', 'completed', 'completed', 'in-progress', 'pending']);
-        addAuditEntry('Approval Decision', 'CFO approved document electronically');
+        addAuditEntry('Notify Approver', 'Email notification sent to CFO');
+        setStepStatuses(['completed', 'completed', 'completed', 'completed', 'in-progress', 'pending']);
         setIsProcessing(false);
       }, 1500);
     }, 1000);
@@ -153,7 +155,7 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
       addAuditEntry('PKI Signature', 'Failed to apply signature', 'Failure');
       setStepStatuses(prev => {
         const newStatuses = [...prev];
-        newStatuses[3] = 'error';
+        newStatuses[4] = 'error';
         return newStatuses;
       });
     }
@@ -168,12 +170,12 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
     setSearchTerm('');
     initializeAuditTrail();
     if(document?.isSigned) {
-        setStepStatuses(['completed', 'completed', 'completed', 'completed', 'completed']);
+        setStepStatuses(['completed', 'completed', 'completed', 'completed', 'completed', 'completed']);
     } else if (document?.isSharedForSignature) {
-        setStepStatuses(['completed', 'in-progress', 'pending', 'pending', 'pending']);
+        setStepStatuses(['completed', 'in-progress', 'pending', 'pending', 'pending', 'pending']);
     }
     else {
-        setStepStatuses(['completed', 'pending', 'pending', 'pending', 'pending']);
+        setStepStatuses(['completed', 'pending', 'pending', 'pending', 'pending', 'pending']);
     }
   };
 
@@ -321,7 +323,7 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
                     </div>
                 )}
 
-                {currentStepIndex === 3 && (
+                {currentStepIndex === 4 && (
                     <Dialog open={isSignDialogOpen} onOpenChange={setIsSignDialogOpen}>
                         <DialogTrigger asChild>
                              <Button
@@ -412,3 +414,5 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
 };
 
 export default TransactionDemo;
+
+    
