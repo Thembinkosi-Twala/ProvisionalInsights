@@ -79,6 +79,7 @@ export default function Home() {
   };
 
     const handleShareDocument = (documentId: string) => {
+        setProcessingDocumentId(documentId);
         setDocuments(prev =>
             prev.map(doc =>
                 doc.id === documentId ? { ...doc, isSharedForSignature: true } : doc
@@ -88,6 +89,7 @@ export default function Home() {
             title: 'Document Shared',
             description: 'The document has been sent for signature.',
         });
+        setProcessingDocumentId(null);
     };
 
   const handleSignDocument = async (documentId: string, signatureDataUrl: string) => {
@@ -224,7 +226,7 @@ export default function Home() {
                         <DocumentDetails 
                             document={selectedDocument} 
                             onShare={handleShareDocument} 
-                            isLoading={isLoading && processingDocumentId === selectedDocumentId}
+                            isLoading={processingDocumentId === selectedDocumentId}
                             userRole={userRole}
                         />
                       </div>
@@ -240,7 +242,9 @@ export default function Home() {
                     <TransactionDemo 
                       document={selectedDocument}
                       onSignDocument={handleSignDocument}
+                      onShareDocument={handleShareDocument}
                       userRole={userRole}
+                      isLoading={processingDocumentId === selectedDocumentId}
                     />
                   </TabsContent>
                 </Tabs>
