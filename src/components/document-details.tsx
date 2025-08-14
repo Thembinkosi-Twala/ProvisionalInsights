@@ -15,7 +15,6 @@ import {
     DialogTitle,
     DialogTrigger,
   } from '@/components/ui/dialog';
-import SignatureUpload from './signature-pad';
 import ShareDocumentDialog from './share-document-dialog';
 import { useToast } from '@/hooks/use-toast';
 
@@ -117,34 +116,20 @@ export default function DocumentDetails({ document, onSign, isLoading }: Documen
         </Button>
         {!document.isSigned && (
             <Dialog>
-                <DialogTrigger asChild>
-                    <Button className="w-full sm:w-auto" disabled={isLoading}>
-                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Sign Document
-                    </Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Add Your Signature</DialogTitle>
-                    </DialogHeader>
-                    <SignatureUpload onSave={(signature) => onSign(document.id, signature)} />
-                </DialogContent>
+            <DialogTrigger asChild>
+                <Button variant="default" className="w-full sm:w-auto">
+                <Share2 className="mr-2 h-4 w-4" />
+                Share for Signature
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Share for Signature</DialogTitle>
+                </DialogHeader>
+                <ShareDocumentDialog onShare={handleShare} />
+            </DialogContent>
             </Dialog>
         )}
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" className="w-full sm:w-auto">
-              <Share2 className="mr-2 h-4 w-4" />
-              Share
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Share for Signature</DialogTitle>
-            </DialogHeader>
-            <ShareDocumentDialog onShare={handleShare} />
-          </DialogContent>
-        </Dialog>
       </CardFooter>
     </Card>
   );
