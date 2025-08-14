@@ -9,6 +9,7 @@ import { ShieldCheck, Info, Pencil, Download, CheckCircle, Loader2 } from 'lucid
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import SignatureUpload from './signature-pad';
+import ComplianceCheck from './compliance-check';
 
 interface DocumentDetailsProps {
   document: Document | undefined;
@@ -47,8 +48,6 @@ export default function DocumentDetails({ document, onSign, isLoading }: Documen
     window.document.body.removeChild(link);
   }
 
-  const isCompliant = !!document.title && !!document.summary;
-
   return (
     <Card className="flex flex-col h-full">
       <CardHeader>
@@ -68,21 +67,7 @@ export default function DocumentDetails({ document, onSign, isLoading }: Documen
             ))}
           </div>
         </div>
-        <div className="space-y-2">
-          <h4 className="font-semibold text-foreground">Compliance & Status</h4>
-           <div className="flex flex-wrap gap-2">
-            <Badge variant={isCompliant ? "default" : "destructive"} className={isCompliant ? "bg-green-600 hover:bg-green-700 text-white" : ""}>
-                <ShieldCheck className="mr-2 h-4 w-4" />
-                {isCompliant ? 'Compliant' : 'Non-Compliant'}
-            </Badge>
-            {document.isSigned && (
-                 <Badge variant="default" className="bg-blue-600 hover:bg-blue-700 text-white">
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Signed
-                 </Badge>
-            )}
-           </div>
-        </div>
+        <ComplianceCheck document={document} />
       </CardContent>
       <CardFooter className="flex flex-wrap gap-2">
          <Dialog open={isSigning} onOpenChange={setIsSigning}>
