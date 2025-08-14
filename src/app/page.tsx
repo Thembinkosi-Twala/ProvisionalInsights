@@ -7,13 +7,14 @@ import DocumentUpload from '@/components/document-upload';
 import DocumentList from '@/components/document-list';
 import DocumentDetails from '@/components/document-details';
 import DocumentAnalytics from '@/components/document-analytics';
+import DocumentFilters, { type Filter } from '@/components/document-filters';
 import { ProvincialInsightsIcon } from '@/components/icons';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Home() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState<Filter[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -50,6 +51,33 @@ export default function Home() {
     }
   };
 
+  const filteredDocuments = useMemo(() => {
+    if (filters.length === 0) {
+      return documents;
+    }
+    return documents.filter(doc => {
+      return filters.every(filter => {
+        const { field, condition, value } = filter;
+        const docValue = doc[field as keyof Document];
+        const lowerCaseValue = String(value).toLowerCase();
+
+        if (Array.isArray(docValue)) {
+            const lowerCaseDocValue = docValue.map(v => String(v).toLowerCase());
+            if (condition === 'contains') return lowerCaseDocValue.some(v => v.includes(lowerCaseValue));
+            if (condition === 'not-contains') return !lowerCaseDocValue.some(v => v.includes(lowerCaseValue));
+        } else {
+            const lowerCaseDocValue = String(docValue).toLowerCase();
+            if (condition === 'contains') return lowerCaseDocValue.includes(lowerCaseValue);
+            if (condition === 'not-contains') return !lowerCaseDocValue.includes(lowerCaseValue);
+            if (condition === 'equals') return lowerCaseDocValue === lowerCaseValue;
+            if (condition === 'not-equals') return lowerCaseDocValue !== lowerCaseValue;
+        }
+        return false;
+      });
+    });
+  }, [documents, filters]);
+
+
   const selectedDocument = useMemo(
     () => documents.find(doc => doc.id === selectedDocumentId),
     [documents, selectedDocumentId]
@@ -67,10 +95,9 @@ export default function Home() {
         <div className="grid md:grid-cols-12 h-full">
           <div className="md:col-span-4 lg:col-span-3 xl:col-span-3 p-4 border-r overflow-y-auto flex flex-col gap-4">
             <DocumentUpload onFileUpload={onFileUpload} isLoading={isLoading} />
+            <DocumentFilters filters={filters} onFiltersChange={setFilters} />
             <DocumentList
-              documents={documents}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
+              documents={filteredDocuments}
               selectedDocumentId={selectedDocumentId}
               onSelectDocument={setSelectedDocumentId}
             />
