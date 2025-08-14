@@ -184,7 +184,7 @@ export default function Home() {
                     <DocumentPreview document={selectedDocument} />
                   </TabsContent>
                   <TabsContent value="demo" className="flex-grow">
-                    <TransactionDemo />
+                    <TransactionDemo document={selectedDocument} />
                   </TabsContent>
                 </Tabs>
              </div>
