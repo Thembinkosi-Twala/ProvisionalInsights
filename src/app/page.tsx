@@ -51,6 +51,14 @@ export default function Home() {
     }
   };
 
+  const handleSignDocument = (documentId: string, signatureDataUrl: string) => {
+    setDocuments(prev =>
+      prev.map(doc =>
+        doc.id === documentId ? { ...doc, signatureDataUrl } : doc
+      )
+    );
+  };
+
   const filteredDocuments = useMemo(() => {
     if (filters.length === 0) {
       return documents;
@@ -105,7 +113,7 @@ export default function Home() {
           <div className="md:col-span-8 lg:col-span-9 xl:col-span-9 flex flex-col overflow-hidden">
             <div className="flex-1 p-4 md:p-6 overflow-y-auto grid grid-cols-1 xl:grid-cols-3 gap-6">
               <div className="xl:col-span-2">
-                 <DocumentDetails document={selectedDocument} />
+                 <DocumentDetails document={selectedDocument} onSign={handleSignDocument} />
               </div>
               <div className="xl:col-span-1">
                 <DocumentAnalytics documents={documents} />
