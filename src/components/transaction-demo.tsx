@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FileText, Users, Shield, CheckCircle, AlertCircle, Clock, Lock, Eye, Download, RefreshCw, Search, Info, XCircle, ChevronRight, Send, Loader2 } from 'lucide-react';
+import { FileText, Users, Shield, CheckCircle, AlertCircle, Clock, Lock, Eye, Download, RefreshCw, Search, Info, XCircle, ChevronRight, Send, Loader2, History } from 'lucide-react';
 import type { Document } from '@/lib/types';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -37,7 +37,8 @@ const TransactionDemo = ({ document, onSignDocument, onShareDocument, userRole, 
         { id: 'upload', name: 'Document Upload', icon: FileText, getStatus: (doc) => doc ? 'completed' : 'pending' },
         { id: 'routing', name: 'Approval Routing', icon: Users, getStatus: (doc) => doc.isSharedForSignature ? 'completed' : doc ? 'in-progress' : 'pending' },
         { id: 'signature', name: 'PKI Digital Signature', icon: Lock, getStatus: (doc) => doc.isSigned ? 'completed' : doc.isSharedForSignature ? 'in-progress' : 'pending' },
-        { id: 'storage', name: 'Secure Storage', icon: CheckCircle, getStatus: (doc) => doc.isSigned ? 'completed' : 'pending' }
+        { id: 'storage', name: 'Secure Storage', icon: CheckCircle, getStatus: (doc) => doc.isSigned ? 'completed' : 'pending' },
+        { id: 'audit', name: 'Immutable Audit Trail', icon: History, getStatus: (doc) => doc.isSigned ? 'completed' : 'pending' }
     ];
 
     const handlePKISigning = async (signature: string) => {

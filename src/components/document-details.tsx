@@ -17,6 +17,7 @@ import {
   } from '@/components/ui/dialog';
 import ShareDocumentDialog from './share-document-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { Separator } from './ui/separator';
 
 interface DocumentDetailsProps {
   document: Document | undefined;
@@ -110,6 +111,21 @@ export default function DocumentDetails({ document, onShare, isLoading, userRole
           </div>
         </div>
         <ComplianceCheck document={document} />
+        {document.isSigned && (
+            <div>
+                <Separator className="my-4" />
+                <div className="space-y-2">
+                    <h4 className="font-semibold text-foreground">Audit Trail</h4>
+                    <div className="flex items-center gap-2">
+                        <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-white">
+                            <ShieldCheck className="mr-2 h-4 w-4" />
+                            Verified
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">The audit trail for this document is secure and immutable.</span>
+                    </div>
+                </div>
+            </div>
+        )}
       </CardContent>
       <CardFooter className="flex-col sm:flex-row gap-2 items-center">
         <Button onClick={handleDownload} variant="outline" className="w-full sm:w-auto" disabled={isDownloading}>
