@@ -4,7 +4,7 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FileText, CheckCircle } from 'lucide-react';
+import { FileText, CheckCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Document } from '@/lib/types';
 
@@ -12,12 +12,14 @@ interface DocumentListProps {
   documents: Document[];
   selectedDocumentId: string | null;
   onSelectDocument: (id: string) => void;
+  processingDocumentId?: string | null;
 }
 
 export default function DocumentList({
   documents,
   selectedDocumentId,
   onSelectDocument,
+  processingDocumentId,
 }: DocumentListProps) {
 
   return (
@@ -34,14 +36,21 @@ export default function DocumentList({
                   <li key={doc.id}>
                     <button
                       onClick={() => onSelectDocument(doc.id)}
+                      disabled={!!processingDocumentId}
                       className={cn(
                         'w-full text-left p-3 rounded-lg transition-colors flex items-start gap-3',
                         selectedDocumentId === doc.id
                           ? 'bg-primary/10'
-                          : 'hover:bg-muted/50'
+                          : 'hover:bg-muted/50',
+                        'disabled:cursor-not-allowed disabled:opacity-70'
                       )}
                     >
-                      <FileText className="h-5 w-5 mt-1 text-primary flex-shrink-0" />
+                      {processingDocumentId === doc.id ? (
+                          <Loader2 className="h-5 w-5 mt-1 text-primary flex-shrink-0 animate-spin" />
+                      ) : (
+                          <FileText className="h-5 w-5 mt-1 text-primary flex-shrink-0" />
+                      )}
+
                       <div className="flex-1 overflow-hidden">
                         <p className="font-semibold truncate text-foreground flex items-center gap-2">
                             {doc.title || doc.fileName}

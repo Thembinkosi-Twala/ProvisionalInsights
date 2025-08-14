@@ -116,7 +116,8 @@ export default function DocumentDetails({ document, onShare, isLoading }: Docume
         {!document.isSigned && (
             <Dialog>
             <DialogTrigger asChild>
-                <Button variant="default" className="w-full sm:w-auto" disabled={document.isSharedForSignature}>
+                <Button variant="default" className="w-full sm:w-auto" disabled={document.isSharedForSignature || isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 <Share2 className="mr-2 h-4 w-4" />
                 {document.isSharedForSignature ? 'Shared for Signature' : 'Share for Signature'}
                 </Button>

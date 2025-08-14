@@ -25,6 +25,7 @@ export default function Home() {
   const { toast } = useToast();
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [processingDocumentId, setProcessingDocumentId] = useState<string | null>(null);
 
   useEffect(() => {
     const authStatus = sessionStorage.getItem('isAuthenticated');
@@ -91,6 +92,7 @@ export default function Home() {
     if (!originalDocument) return;
 
     setIsLoading(true);
+    setProcessingDocumentId(documentId);
     try {
       const result = await signDocument(originalDocument.documentDataUri, signatureDataUrl);
       if (result.error) {
@@ -134,6 +136,7 @@ export default function Home() {
       });
     } finally {
         setIsLoading(false);
+        setProcessingDocumentId(null);
     }
     return false;
   };
@@ -191,6 +194,7 @@ export default function Home() {
               documents={filteredDocuments}
               selectedDocumentId={selectedDocumentId}
               onSelectDocument={setSelectedDocumentId}
+              processingDocumentId={processingDocumentId}
             />
           </div>
           <div className="md:col-span-8 lg:col-span-9 xl:col-span-9 flex flex-col overflow-hidden">
@@ -204,7 +208,7 @@ export default function Home() {
                   <TabsContent value="details" className="flex-grow">
                     <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 h-full">
                       <div className="xl:col-span-2">
-                        <DocumentDetails document={selectedDocument} onShare={handleShareDocument} isLoading={isLoading} />
+                        <DocumentDetails document={selectedDocument} onShare={handleShareDocument} isLoading={isLoading && processingDocumentId === selectedDocumentId} />
                       </div>
                       <div className="xl:col-span-1">
                         <DocumentAnalytics documents={documents} />
