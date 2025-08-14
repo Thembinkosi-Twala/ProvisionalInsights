@@ -1,7 +1,8 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FileText, Users, Shield, CheckCircle, AlertCircle, Clock, Lock, Eye, Download, RefreshCw, Search, Info } from 'lucide-react';
+import { FileText, Users, Shield, CheckCircle, AlertCircle, Clock, Lock, Eye, Download, RefreshCw, Search, Info, XCircle } from 'lucide-react';
 import type { Document } from '@/lib/types';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -32,8 +33,10 @@ interface TransactionDemoProps {
     onSignDocument: (documentId: string, signature: string) => Promise<boolean | undefined>;
 }
 
+type StepStatus = 'pending' | 'in-progress' | 'completed' | 'error';
+
 const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => {
-  const [currentStep, setCurrentStep] = useState(0);
+  const [stepStatuses, setStepStatuses] = useState<StepStatus[]>(['completed', 'pending', 'pending', 'pending', 'pending']);
   const [isProcessing, setIsProcessing] = useState(false);
   const [mfaCode, setMfaCode] = useState('');
   const [mfaError, setMfaError] = useState('');
@@ -78,8 +81,13 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
   }, [document]);
 
   useEffect(() => {
-    if (document?.isSigned && currentStep >= 3) {
-      setCurrentStep(4);
+    if (document?.isSigned) {
+        setStepStatuses(prev => {
+            const newStatuses = [...prev];
+            if (newStatuses[3] === 'in-progress') newStatuses[3] = 'completed';
+            if (newStatuses[4] !== 'completed') newStatuses[4] = 'completed';
+            return newStatuses;
+        });
       addAuditEntry('Document Storage', 'Signed document archived in SharePoint with immutable hash');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -88,13 +96,23 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
   const simulateMFA = () => {
     setIsProcessing(true);
     setMfaError('');
+    setStepStatuses(prev => {
+        const newStatuses = [...prev];
+        newStatuses[1] = 'in-progress';
+        return newStatuses;
+    });
     setTimeout(() => {
       if (mfaCode === '123456') {
-        setCurrentStep(1);
+        setStepStatuses(['completed', 'completed', 'in-progress', 'pending', 'pending']);
         addAuditEntry('MFA Authentication', 'SMS OTP verified successfully');
       } else {
         setMfaError('Incorrect MFA code. Please try again.');
         addAuditEntry('MFA Authentication', 'Failed MFA attempt', 'Failure');
+        setStepStatuses(prev => {
+            const newStatuses = [...prev];
+            newStatuses[1] = 'error';
+            return newStatuses;
+        });
       }
       setIsProcessing(false);
     }, 1500);
@@ -102,11 +120,11 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
 
   const simulateApproval = () => {
     setIsProcessing(true);
+    setStepStatuses(['completed', 'completed', 'in-progress', 'pending', 'pending']);
     setTimeout(() => {
-      setCurrentStep(2);
       addAuditEntry('Approval Routing', 'Document routed to CFO for approval');
       setTimeout(() => {
-        setCurrentStep(3);
+        setStepStatuses(['completed', 'completed', 'completed', 'in-progress', 'pending']);
         addAuditEntry('Approval Decision', 'CFO approved document electronically');
         setIsProcessing(false);
       }, 1500);
@@ -122,18 +140,27 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
       addAuditEntry('PKI Signature', 'Document signed with government-qualified certificate');
     } else {
       addAuditEntry('PKI Signature', 'Failed to apply signature', 'Failure');
+      setStepStatuses(prev => {
+        const newStatuses = [...prev];
+        newStatuses[3] = 'error';
+        return newStatuses;
+      });
     }
     setIsProcessing(false);
   };
 
 
   const handleRestart = () => {
-    setCurrentStep(0);
     setIsProcessing(false);
     setMfaCode('');
     setMfaError('');
     setSearchTerm('');
     initializeAuditTrail();
+    if(document?.isSigned) {
+        setStepStatuses(['completed', 'completed', 'completed', 'completed', 'completed']);
+    } else {
+        setStepStatuses(['completed', 'in-progress', 'pending', 'pending', 'pending']);
+    }
   };
 
   const handleDownload = () => {
@@ -165,6 +192,8 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
         </Card>
     );
   }
+
+  const currentStepIndex = stepStatuses.indexOf('in-progress');
 
   return (
     <div className="space-y-6">
@@ -203,32 +232,29 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
                 <CardContent className="space-y-4">
                 {steps.map((step, index) => {
                     const Icon = step.icon;
-                    const isActive = index === currentStep;
-                    const isCompleted = index < currentStep || (step.id === 'storage' && document.isSigned);
+                    const status = stepStatuses[index];
+                    const statusStyles = {
+                        'pending': { border: 'border-border', bg: 'bg-muted/50', iconBg: 'bg-muted-foreground/20', iconText: 'text-muted-foreground' },
+                        'in-progress': { border: 'border-primary', bg: 'bg-primary/10', iconBg: 'bg-primary', iconText: 'text-primary-foreground' },
+                        'completed': { border: 'border-green-500', bg: 'bg-green-500/10', iconBg: 'bg-green-500', iconText: 'text-white' },
+                        'error': { border: 'border-destructive', bg: 'bg-destructive/10', iconBg: 'bg-destructive', iconText: 'text-destructive-foreground' },
+                    };
                     
                     return (
-                    <div key={step.id} className={`flex items-center p-4 rounded-lg border-2 transition-all ${
-                        isActive ? 'border-primary bg-primary/10' : 
-                        isCompleted ? 'border-green-500 bg-green-500/10' : 
-                        'border-border bg-muted/50'
-                    }`}>
-                        <div className={`flex items-center justify-center w-10 h-10 rounded-full mr-4 ${
-                        isCompleted ? 'bg-green-500 text-white' :
-                        isActive ? 'bg-primary text-primary-foreground' :
-                        'bg-muted-foreground/20 text-muted-foreground'
-                        }`}>
-                        <Icon size={20} />
+                    <div key={step.id} className={`flex items-center p-4 rounded-lg border-2 transition-all ${statusStyles[status].border} ${statusStyles[status].bg}`}>
+                        <div className={`flex items-center justify-center w-10 h-10 rounded-full mr-4 ${statusStyles[status].iconBg} ${statusStyles[status].iconText}`}>
+                            {status === 'error' ? <XCircle size={20} /> : <Icon size={20} />}
                         </div>
                         <div className="flex-1">
-                        <h3 className="font-semibold">{step.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                            {isCompleted ? 'Completed' : isActive ? 'In Progress' : 'Pending'}
-                        </p>
+                            <h3 className="font-semibold">{step.name}</h3>
+                            <p className="text-sm text-muted-foreground capitalize">
+                                {status.replace('-', ' ')}
+                            </p>
                         </div>
-                        {isActive && !isProcessing && (
-                        <div className="animate-pulse">
-                            <div className="w-3 h-3 bg-primary rounded-full"></div>
-                        </div>
+                        {status === 'in-progress' && !isProcessing && (
+                            <div className="animate-pulse">
+                                <div className="w-3 h-3 bg-primary rounded-full"></div>
+                            </div>
                         )}
                     </div>
                     );
@@ -241,7 +267,7 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
                     <CardTitle>Interactive Demo Controls</CardTitle>
                 </CardHeader>
                 <CardContent>
-                {currentStep === 0 && (
+                {currentStepIndex === 1 && (
                     <div className="space-y-2">
                     <p className="text-muted-foreground">Enter MFA code to proceed with authentication:</p>
                     <div className="flex gap-2">
@@ -267,7 +293,7 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
                     </div>
                 )}
 
-                {(currentStep > 0 && currentStep < 3) && (
+                {currentStepIndex === 2 && (
                     <div>
                     <p className="mb-4 text-muted-foreground">Initiate approval workflow:</p>
                     <Button
@@ -279,7 +305,7 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
                     </div>
                 )}
 
-                {currentStep === 3 && (
+                {currentStepIndex === 3 && (
                     <Dialog open={isSignDialogOpen} onOpenChange={setIsSignDialogOpen}>
                         <DialogTrigger asChild>
                              <Button
@@ -297,7 +323,7 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
                     </Dialog>
                 )}
 
-                {currentStep === 4 && document.isSigned && (
+                {stepStatuses.every(s => s === 'completed') && document.isSigned && (
                     <div className="text-center space-y-4">
                     <CheckCircle className="mx-auto text-green-500" size={48} />
                     <h3 className="text-xl font-semibold text-foreground">
@@ -370,3 +396,4 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
 };
 
 export default TransactionDemo;
+
