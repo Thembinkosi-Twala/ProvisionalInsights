@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -7,7 +8,7 @@ import type { Document } from '@/lib/types';
 import { ShieldCheck, Info, Pencil, Download, CheckCircle, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import SignaturePad from './signature-pad';
+import SignatureUpload from './signature-pad';
 
 interface DocumentDetailsProps {
   document: Document | undefined;
@@ -93,9 +94,9 @@ export default function DocumentDetails({ document, onSign, isLoading }: Documen
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Sign Document</DialogTitle>
+                    <DialogTitle>Upload Signature</DialogTitle>
                 </DialogHeader>
-                <SignaturePad onSave={handleSaveSignature} />
+                <SignatureUpload onSave={handleSaveSignature} />
             </DialogContent>
         </Dialog>
         <Button variant="outline" onClick={handleDownload}>
