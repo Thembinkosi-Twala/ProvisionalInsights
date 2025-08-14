@@ -98,6 +98,7 @@ export default function Home() {
                 description: 'The signed document has been sent for archiving.',
             });
         }
+        return true;
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
@@ -109,6 +110,7 @@ export default function Home() {
     } finally {
         setIsLoading(false);
     }
+    return false;
   };
 
   const filteredDocuments = useMemo(() => {
@@ -184,7 +186,10 @@ export default function Home() {
                     <DocumentPreview document={selectedDocument} />
                   </TabsContent>
                   <TabsContent value="demo" className="flex-grow">
-                    <TransactionDemo document={selectedDocument} />
+                    <TransactionDemo 
+                      document={selectedDocument}
+                      onSignDocument={handleSignDocument}
+                    />
                   </TabsContent>
                 </Tabs>
              </div>

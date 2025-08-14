@@ -1,14 +1,15 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FileText, Users, Shield, CheckCircle, AlertCircle, Clock, Lock, Eye, Download, RefreshCw, Search, Info, Landmark } from 'lucide-react';
+import { FileText, Users, Shield, CheckCircle, AlertCircle, Clock, Lock, Eye, Download, RefreshCw, Search, Info } from 'lucide-react';
 import type { Document } from '@/lib/types';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import SignatureUpload from './signature-pad';
 
 const ROLES = [
   'Finance Manager',
@@ -28,17 +29,19 @@ type AuditEntry = {
 
 interface TransactionDemoProps {
     document: Document | undefined;
+    onSignDocument: (documentId: string, signature: string) => Promise<boolean | undefined>;
 }
 
-const TransactionDemo = ({ document }: TransactionDemoProps) => {
+const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [mfaCode, setMfaCode] = useState('');
-  const [documentSigned, setDocumentSigned] = useState(false);
-  const [auditTrail, setAuditTrail] = useState<AuditEntry[]>([]);
   const [mfaError, setMfaError] = useState('');
   const [selectedRole, setSelectedRole] = useState(ROLES[0]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [auditTrail, setAuditTrail] = useState<AuditEntry[]>([]);
+  const [isSignDialogOpen, setIsSignDialogOpen] = useState(false);
+
 
   const steps = [
     { id: 'upload', name: 'Document Upload', icon: FileText },
@@ -50,7 +53,7 @@ const TransactionDemo = ({ document }: TransactionDemoProps) => {
 
   const addAuditEntry = (action: string, details: string, status: 'Success' | 'Failure' = 'Success') => {
     const timestamp = new Date().toLocaleString();
-    setAuditTrail(prev => [...prev, {
+    setAuditTrail(prev => [{
       id: Date.now() + Math.random(),
       timestamp,
       action,
@@ -58,7 +61,7 @@ const TransactionDemo = ({ document }: TransactionDemoProps) => {
       user: `${selectedRole}`,
       ipAddress: '10.0.0.45',
       status,
-    }]);
+    }, ...prev]);
   };
 
   const initializeAuditTrail = () => {
@@ -73,6 +76,14 @@ const TransactionDemo = ({ document }: TransactionDemoProps) => {
     handleRestart();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [document]);
+
+  useEffect(() => {
+    if (document?.isSigned && currentStep >= 3) {
+      setCurrentStep(4);
+      addAuditEntry('Document Storage', 'Signed document archived in SharePoint with immutable hash');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [document?.isSigned]);
 
   const simulateMFA = () => {
     setIsProcessing(true);
@@ -102,37 +113,37 @@ const TransactionDemo = ({ document }: TransactionDemoProps) => {
     }, 1000);
   };
 
-  const simulatePKISigning = () => {
+  const handlePKISigning = async (signature: string) => {
+    if (!document) return;
+    setIsSignDialogOpen(false);
     setIsProcessing(true);
-    setTimeout(() => {
-      setCurrentStep(4);
-      setDocumentSigned(true);
+    const success = await onSignDocument(document.id, signature);
+    if (success) {
       addAuditEntry('PKI Signature', 'Document signed with government-qualified certificate');
-      addAuditEntry('Document Storage', 'Signed document archived in SharePoint with immutable hash');
-      setIsProcessing(false);
-    }, 2000);
+    } else {
+      addAuditEntry('PKI Signature', 'Failed to apply signature', 'Failure');
+    }
+    setIsProcessing(false);
   };
+
 
   const handleRestart = () => {
     setCurrentStep(0);
     setIsProcessing(false);
     setMfaCode('');
-    setDocumentSigned(false);
     setMfaError('');
     setSearchTerm('');
     initializeAuditTrail();
   };
 
   const handleDownload = () => {
-    const content = document ? `Signed content for ${document.fileName}` : 'Signed Document Content';
-    const filename = document ? `signed_${document.fileName}.txt` : 'SignedDocument.txt';
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = window.document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
+    if (!document) return;
+    const link = window.document.createElement('a');
+    link.href = document.documentDataUri;
+    link.download = document.isSigned ? `${document.fileName.split('.')[0]}_signed.pdf` : document.fileName;
+    window.document.body.appendChild(link);
+    link.click();
+    window.document.body.removeChild(link);
     addAuditEntry('Download', 'User downloaded the signed document');
   };
 
@@ -175,7 +186,7 @@ const TransactionDemo = ({ document }: TransactionDemoProps) => {
                 onClick={handleRestart}
                 variant="outline"
               >
-                <RefreshCw className="mr-2"/>
+                <RefreshCw />
                 Restart Demo
               </Button>
         </div>
@@ -193,7 +204,7 @@ const TransactionDemo = ({ document }: TransactionDemoProps) => {
                 {steps.map((step, index) => {
                     const Icon = step.icon;
                     const isActive = index === currentStep;
-                    const isCompleted = index < currentStep;
+                    const isCompleted = index < currentStep || (step.id === 'storage' && document.isSigned);
                     
                     return (
                     <div key={step.id} className={`flex items-center p-4 rounded-lg border-2 transition-all ${
@@ -269,18 +280,24 @@ const TransactionDemo = ({ document }: TransactionDemoProps) => {
                 )}
 
                 {currentStep === 3 && (
-                    <div>
-                    <p className="mb-4 text-muted-foreground">Apply PKI digital signature:</p>
-                    <Button
-                        onClick={simulatePKISigning}
-                        disabled={isProcessing}
-                    >
-                        {isProcessing ? 'Signing...' : 'Apply Digital Signature'}
-                    </Button>
-                    </div>
+                    <Dialog open={isSignDialogOpen} onOpenChange={setIsSignDialogOpen}>
+                        <DialogTrigger asChild>
+                             <Button
+                                disabled={isProcessing || document.isSigned}
+                            >
+                                {isProcessing ? 'Signing...' : document.isSigned ? 'Document Signed' : 'Apply Digital Signature'}
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Add Your Signature</DialogTitle>
+                            </DialogHeader>
+                            <SignatureUpload onSave={handlePKISigning} />
+                        </DialogContent>
+                    </Dialog>
                 )}
 
-                {currentStep === 4 && documentSigned && (
+                {currentStep === 4 && document.isSigned && (
                     <div className="text-center space-y-4">
                     <CheckCircle className="mx-auto text-green-500" size={48} />
                     <h3 className="text-xl font-semibold text-foreground">
@@ -293,7 +310,7 @@ const TransactionDemo = ({ document }: TransactionDemoProps) => {
                         onClick={handleDownload}
                         variant="outline"
                     >
-                        <Download className="mr-2" />
+                        <Download />
                         Download Signed Document
                     </Button>
                     </div>
