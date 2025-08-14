@@ -195,21 +195,119 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
     entry.user.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (!document) {
-    return (
-        <Card className="h-full flex flex-col items-center justify-center text-center">
-            <Info className="h-12 w-12 text-muted-foreground" />
-            <CardHeader>
-                <CardTitle>No Document Selected for Demo</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p className="text-muted-foreground">Please select a document from the list to start the transaction demo.</p>
-            </CardContent>
-        </Card>
-    );
-  }
+  const renderNoDocumentState = () => (
+    <Card className="h-full flex flex-col items-center justify-center text-center">
+        <Info className="h-12 w-12 text-muted-foreground" />
+        <CardHeader>
+            <CardTitle>No Document Selected for Demo</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <p className="text-muted-foreground">Please select a document from the list to start the transaction demo.</p>
+        </CardContent>
+    </Card>
+  );
 
-  const currentStepIndex = stepStatuses.indexOf('in-progress');
+  const renderControls = () => {
+    const currentStepIndex = stepStatuses.indexOf('in-progress');
+    const allStepsCompleted = stepStatuses.every(s => s === 'completed');
+
+    if (currentStepIndex === 1) { // MFA Authentication
+        return (
+            <div className="space-y-2">
+            <p className="text-muted-foreground">Enter MFA code to proceed with authentication:</p>
+            <div className="flex gap-2">
+                <Input
+                type="text"
+                placeholder="Enter 123456"
+                value={mfaCode}
+                onChange={(e) => setMfaCode(e.target.value)}
+                />
+                <Button
+                onClick={simulateMFA}
+                disabled={isProcessing || !mfaCode}
+                >
+                {isProcessing ? 'Verifying...' : 'Verify MFA'}
+                </Button>
+            </div>
+            {mfaError && (
+                <p className="mt-2 text-sm text-destructive flex items-center gap-2">
+                <AlertCircle size={16} />
+                {mfaError}
+                </p>
+            )}
+            </div>
+        );
+    }
+
+    if (currentStepIndex === 2) { // Approval Routing
+        return (
+            <div>
+            <p className="mb-4 text-muted-foreground">Initiate approval workflow:</p>
+            <Button
+                onClick={simulateApproval}
+                disabled={isProcessing}
+            >
+                {isProcessing ? 'Routing...' : 'Send for Approval'}
+            </Button>
+            </div>
+        );
+    }
+    
+    if (currentStepIndex === 4) { // PKI Signature
+        return (
+            <Dialog open={isSignDialogOpen} onOpenChange={setIsSignDialogOpen}>
+                <DialogTrigger asChild>
+                     <Button
+                        disabled={isProcessing || document?.isSigned}
+                    >
+                        {isProcessing ? 'Signing...' : document?.isSigned ? 'Document Signed' : 'Apply Digital Signature'}
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Add Your Signature</DialogTitle>
+                    </DialogHeader>
+                    <SignatureUpload onSave={handlePKISigning} />
+                </DialogContent>
+            </Dialog>
+        );
+    }
+    
+    if (allStepsCompleted && document?.isSigned) {
+        return (
+            <div className="text-center space-y-4">
+            <CheckCircle className="mx-auto text-green-500" size={48} />
+            <h3 className="text-xl font-semibold text-foreground">
+                Document Successfully Processed!
+            </h3>
+            <p className="text-muted-foreground">
+                The document has been digitally signed and securely stored with full audit trail.
+            </p>
+            <Button
+                onClick={handleDownload}
+                variant="outline"
+            >
+                <Download />
+                Download Signed Document
+            </Button>
+            </div>
+        );
+    }
+
+    // Default state when no step is in-progress
+    return (
+        <div className="text-center text-muted-foreground p-4">
+            <Info className="mx-auto mb-2" />
+            <p>The workflow is awaiting the next action.</p>
+            <p className="text-sm">This may be triggered from another part of the application (e.g. sharing a document).</p>
+        </div>
+    );
+  };
+
+
+  if (!document) {
+    return renderNoDocumentState();
+  }
 
   return (
     <div className="space-y-6">
@@ -285,80 +383,7 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
                     <CardTitle>Interactive Demo Controls</CardTitle>
                 </CardHeader>
                 <CardContent>
-                {currentStepIndex === 1 && (
-                    <div className="space-y-2">
-                    <p className="text-muted-foreground">Enter MFA code to proceed with authentication:</p>
-                    <div className="flex gap-2">
-                        <Input
-                        type="text"
-                        placeholder="Enter 123456"
-                        value={mfaCode}
-                        onChange={(e) => setMfaCode(e.target.value)}
-                        />
-                        <Button
-                        onClick={simulateMFA}
-                        disabled={isProcessing || !mfaCode}
-                        >
-                        {isProcessing ? 'Verifying...' : 'Verify MFA'}
-                        </Button>
-                    </div>
-                    {mfaError && (
-                        <p className="mt-2 text-sm text-destructive flex items-center gap-2">
-                        <AlertCircle size={16} />
-                        {mfaError}
-                        </p>
-                    )}
-                    </div>
-                )}
-
-                {currentStepIndex === 2 && (
-                    <div>
-                    <p className="mb-4 text-muted-foreground">Initiate approval workflow:</p>
-                    <Button
-                        onClick={simulateApproval}
-                        disabled={isProcessing}
-                    >
-                        {isProcessing ? 'Routing...' : 'Send for Approval'}
-                    </Button>
-                    </div>
-                )}
-
-                {currentStepIndex === 4 && (
-                    <Dialog open={isSignDialogOpen} onOpenChange={setIsSignDialogOpen}>
-                        <DialogTrigger asChild>
-                             <Button
-                                disabled={isProcessing || document.isSigned}
-                            >
-                                {isProcessing ? 'Signing...' : document.isSigned ? 'Document Signed' : 'Apply Digital Signature'}
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Add Your Signature</DialogTitle>
-                            </DialogHeader>
-                            <SignatureUpload onSave={handlePKISigning} />
-                        </DialogContent>
-                    </Dialog>
-                )}
-
-                {stepStatuses.every(s => s === 'completed') && document.isSigned && (
-                    <div className="text-center space-y-4">
-                    <CheckCircle className="mx-auto text-green-500" size={48} />
-                    <h3 className="text-xl font-semibold text-foreground">
-                        Document Successfully Processed!
-                    </h3>
-                    <p className="text-muted-foreground">
-                        The document has been digitally signed and securely stored with full audit trail.
-                    </p>
-                    <Button
-                        onClick={handleDownload}
-                        variant="outline"
-                    >
-                        <Download />
-                        Download Signed Document
-                    </Button>
-                    </div>
-                )}
+                    {renderControls()}
                 </CardContent>
             </Card>
           </div>
@@ -414,5 +439,3 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
 };
 
 export default TransactionDemo;
-
-    
