@@ -12,11 +12,11 @@ import { Label } from './ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import SignatureUpload from './signature-pad';
 
-const ROLES = [
-  'Finance Manager',
-  'CFO',
-  'Auditor'
-];
+const ROLES = {
+  Uploader: 'Finance Manager',
+  Approver: 'CFO',
+  Auditor: 'Auditor'
+};
 
 type AuditEntry = {
     id: number;
@@ -31,16 +31,17 @@ type AuditEntry = {
 interface TransactionDemoProps {
     document: Document | undefined;
     onSignDocument: (documentId: string, signature: string) => Promise<boolean | undefined>;
+    userRole: string | null;
 }
 
 type StepStatus = 'pending' | 'in-progress' | 'completed' | 'error';
 
-const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => {
+const TransactionDemo = ({ document, onSignDocument, userRole }: TransactionDemoProps) => {
   const [stepStatuses, setStepStatuses] = useState<StepStatus[]>(['completed', 'pending', 'pending', 'pending', 'pending', 'pending']);
   const [isProcessing, setIsProcessing] = useState(false);
   const [mfaCode, setMfaCode] = useState('');
   const [mfaError, setMfaError] = useState('');
-  const [selectedRole, setSelectedRole] = useState(ROLES[0]);
+  const [selectedRole, setSelectedRole] = useState(userRole || 'Uploader');
   const [searchTerm, setSearchTerm] = useState('');
   const [auditTrail, setAuditTrail] = useState<AuditEntry[]>([]);
   const [isSignDialogOpen, setIsSignDialogOpen] = useState(false);
@@ -55,6 +56,10 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
     { id: 'storage', name: 'Secure Storage', icon: CheckCircle }
   ];
 
+  const getRoleDisplayName = (roleKey: string) => {
+    return ROLES[roleKey as keyof typeof ROLES] || 'System';
+  };
+
   const addAuditEntry = (action: string, details: string, status: 'Success' | 'Failure' = 'Success') => {
     const timestamp = new Date().toLocaleString();
     setAuditTrail(prev => [{
@@ -62,7 +67,7 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
       timestamp,
       action,
       details,
-      user: `${selectedRole}`,
+      user: getRoleDisplayName(selectedRole),
       ipAddress: '10.0.0.45',
       status,
     }, ...prev]);
@@ -73,13 +78,28 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
     const details = document 
         ? `${document.title} uploaded - ID: ${document.id.substring(0, 8)}`
         : 'Awaiting document selection.';
-    addAuditEntry('Document Upload', details);
+    const initialLog = {
+      id: Date.now(),
+      timestamp: new Date().toLocaleString(),
+      action: 'Document Upload',
+      details,
+      user: getRoleDisplayName('Uploader'),
+      ipAddress: '10.0.0.45',
+      status: 'Success'
+    };
+    if (document) {
+      setAuditTrail([initialLog]);
+    }
   }
 
   useEffect(() => {
     handleRestart();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [document?.id]);
+  
+  useEffect(() => {
+    setSelectedRole(userRole || 'Uploader');
+  }, [userRole]);
 
   useEffect(() => {
     if (document?.isSharedForSignature && stepStatuses[1] === 'pending') {
@@ -88,7 +108,9 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
             newStatuses[1] = 'in-progress';
             return newStatuses;
         });
-        addAuditEntry('Document Shared', `Document routed for signature by Finance Manager`);
+        if (!auditTrail.some(e => e.action === 'Document Shared')) {
+           addAuditEntry('Document Shared', `Document routed for signature by ${getRoleDisplayName('Uploader')}`);
+        }
     }
 
     if (document?.isSigned) {
@@ -134,10 +156,10 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
     setIsProcessing(true);
     setStepStatuses(['completed', 'completed', 'in-progress', 'pending', 'pending', 'pending']);
     setTimeout(() => {
-      addAuditEntry('Approval Routing', 'Document routed to CFO for approval');
+      addAuditEntry('Approval Routing', `Document routed to ${getRoleDisplayName('Approver')} for approval`);
       setStepStatuses(['completed', 'completed', 'completed', 'in-progress', 'pending', 'pending']);
       setTimeout(() => {
-        addAuditEntry('Notify Approver', 'Email notification sent to CFO');
+        addAuditEntry('Notify Approver', `Email notification sent to ${getRoleDisplayName('Approver')}`);
         setStepStatuses(['completed', 'completed', 'completed', 'completed', 'in-progress', 'pending']);
         setIsProcessing(false);
       }, 1500);
@@ -210,6 +232,7 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
   const renderControls = () => {
     const currentStepIndex = stepStatuses.indexOf('in-progress');
     const allStepsCompleted = stepStatuses.every(s => s === 'completed');
+    const canSign = userRole === 'Approver' && document?.isSharedForSignature && !document.isSigned;
 
     if (currentStepIndex === 1) { // MFA Authentication
         return (
@@ -253,14 +276,14 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
         );
     }
     
-    if (currentStepIndex === 4) { // PKI Signature
+    if (currentStepIndex === 4 && canSign) { // PKI Signature
         return (
             <Dialog open={isSignDialogOpen} onOpenChange={setIsSignDialogOpen}>
                 <DialogTrigger asChild>
                      <Button
-                        disabled={isProcessing || document?.isSigned}
+                        disabled={isProcessing}
                     >
-                        {isProcessing ? 'Signing...' : document?.isSigned ? 'Document Signed' : 'Apply Digital Signature'}
+                        {isProcessing ? 'Signing...' : 'Apply Digital Signature'}
                     </Button>
                 </DialogTrigger>
                 <DialogContent>
@@ -299,7 +322,10 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
         <div className="text-center text-muted-foreground p-4">
             <Info className="mx-auto mb-2" />
             <p>The workflow is awaiting the next action.</p>
-            <p className="text-sm">This may be triggered from another part of the application (e.g. sharing a document).</p>
+            <p className="text-sm">
+                {userRole === 'Uploader' && 'Share a document to begin the approval process.'}
+                {userRole === 'Approver' && 'A document must be routed to you before you can sign.'}
+            </p>
         </div>
     );
   };
@@ -313,17 +339,8 @@ const TransactionDemo = ({ document, onSignDocument }: TransactionDemoProps) => 
     <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Label htmlFor="role-select" className="font-semibold text-foreground">Select Role:</Label>
-            <Select value={selectedRole} onValueChange={setSelectedRole}>
-                <SelectTrigger id="role-select" className="w-[180px]">
-                    <SelectValue placeholder="Select Role" />
-                </SelectTrigger>
-                <SelectContent>
-                    {ROLES.map(role => (
-                    <SelectItem key={role} value={role}>{role}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+            <Label htmlFor="role-select" className="font-semibold text-foreground">Current Role:</Label>
+            <Input id="role-select" className="w-[180px]" value={getRoleDisplayName(selectedRole)} readOnly disabled />
           </div>
           <Button
                 onClick={handleRestart}

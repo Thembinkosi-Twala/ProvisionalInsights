@@ -13,6 +13,7 @@ interface DocumentListProps {
   selectedDocumentId: string | null;
   onSelectDocument: (id: string) => void;
   processingDocumentId?: string | null;
+  userRole: string | null;
 }
 
 export default function DocumentList({
@@ -20,6 +21,7 @@ export default function DocumentList({
   selectedDocumentId,
   onSelectDocument,
   processingDocumentId,
+  userRole,
 }: DocumentListProps) {
 
   return (
@@ -64,7 +66,12 @@ export default function DocumentList({
               </ul>
             ) : (
               <div className="text-center py-10">
-                <p className="text-muted-foreground">No documents match the current filters.</p>
+                <p className="text-muted-foreground">
+                    {userRole === 'Approver' 
+                        ? "No documents are currently awaiting your approval."
+                        : "No documents match the current filters."
+                    }
+                </p>
               </div>
             )}
           </div>

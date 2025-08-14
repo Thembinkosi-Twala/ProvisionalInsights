@@ -22,9 +22,10 @@ interface DocumentDetailsProps {
   document: Document | undefined;
   onShare: (documentId: string) => void;
   isLoading: boolean;
+  userRole: string | null;
 }
 
-export default function DocumentDetails({ document, onShare, isLoading }: DocumentDetailsProps) {
+export default function DocumentDetails({ document, onShare, isLoading, userRole }: DocumentDetailsProps) {
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = React.useState(false);
 
@@ -87,6 +88,8 @@ export default function DocumentDetails({ document, onShare, isLoading }: Docume
     }
   }
 
+  const canShare = userRole === 'Uploader' && !document.isSigned && !document.isSharedForSignature;
+
   return (
     <Card className="flex flex-col h-full">
       <CardHeader>
@@ -113,13 +116,13 @@ export default function DocumentDetails({ document, onShare, isLoading }: Docume
             {isDownloading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Download
         </Button>
-        {!document.isSigned && (
+        {canShare && (
             <Dialog>
             <DialogTrigger asChild>
-                <Button variant="default" className="w-full sm:w-auto" disabled={document.isSharedForSignature || isLoading}>
+                <Button variant="default" className="w-full sm:w-auto" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 <Share2 className="mr-2 h-4 w-4" />
-                {document.isSharedForSignature ? 'Shared for Signature' : 'Share for Signature'}
+                Share for Signature
                 </Button>
             </DialogTrigger>
             <DialogContent>
@@ -129,6 +132,12 @@ export default function DocumentDetails({ document, onShare, isLoading }: Docume
                 <ShareDocumentDialog onShare={handleShareSubmit} />
             </DialogContent>
             </Dialog>
+        )}
+        {userRole === 'Uploader' && document.isSharedForSignature && !document.isSigned && (
+             <Button variant="outline" className="w-full sm:w-auto" disabled>
+                <Share2 className="mr-2 h-4 w-4" />
+                Shared for Signature
+            </Button>
         )}
       </CardFooter>
     </Card>

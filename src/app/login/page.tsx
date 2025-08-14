@@ -8,15 +8,18 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ProvincialInsightsIcon } from '@/components/icons';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('Uploader');
   const router = useRouter();
 
   const handleLogin = () => {
     // Mock authentication logic - in a real app, you'd verify credentials
     sessionStorage.setItem('isAuthenticated', 'true');
+    sessionStorage.setItem('userRole', role);
     router.push('/');
   };
 
@@ -48,6 +51,18 @@ const LoginPage: React.FC = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+          </div>
+           <div className="space-y-2">
+            <Label htmlFor="role">Role</Label>
+            <Select value={role} onValueChange={setRole}>
+                <SelectTrigger id="role">
+                    <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="Uploader">Document Uploader</SelectItem>
+                    <SelectItem value="Approver">Approver</SelectItem>
+                </SelectContent>
+            </Select>
           </div>
         </CardContent>
         <CardFooter>

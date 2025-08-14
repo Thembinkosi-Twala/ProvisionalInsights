@@ -25,14 +25,17 @@ export default function Home() {
   const { toast } = useToast();
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [processingDocumentId, setProcessingDocumentId] = useState<string | null>(null);
 
   useEffect(() => {
     const authStatus = sessionStorage.getItem('isAuthenticated');
+    const role = sessionStorage.getItem('userRole');
     if (authStatus !== 'true') {
       router.push('/login');
     } else {
       setIsAuthenticated(true);
+      setUserRole(role);
     }
   }, [router]);
 
@@ -142,10 +145,14 @@ export default function Home() {
   };
 
   const filteredDocuments = useMemo(() => {
+    const baseList = userRole === 'Approver' 
+      ? documents.filter(doc => doc.isSharedForSignature)
+      : documents;
+
     if (filters.length === 0) {
-      return documents;
+      return baseList;
     }
-    return documents.filter(doc => {
+    return baseList.filter(doc => {
       return filters.every(filter => {
         const { field, condition, value } = filter;
         const docValue = doc[field as keyof Document];
@@ -165,7 +172,7 @@ export default function Home() {
         return false;
       });
     });
-  }, [documents, filters]);
+  }, [documents, filters, userRole]);
 
 
   const selectedDocument = useMemo(
@@ -184,17 +191,23 @@ export default function Home() {
           <ProvincialInsightsIcon className="w-8 h-8" />
           <h1 className="text-2xl font-bold text-foreground font-headline">Provincial Insights</h1>
         </div>
+        {userRole && (
+          <div className="text-sm text-muted-foreground">
+            Logged in as: <span className="font-semibold text-foreground">{userRole}</span>
+          </div>
+        )}
       </header>
       <main className="flex-1 overflow-hidden">
         <div className="grid md:grid-cols-12 h-full">
           <div className="md:col-span-4 lg:col-span-3 xl:col-span-3 p-4 border-r overflow-y-auto flex flex-col gap-4">
-            <DocumentUpload onFileUpload={onFileUpload} isLoading={isLoading} />
+            {userRole === 'Uploader' && <DocumentUpload onFileUpload={onFileUpload} isLoading={isLoading} />}
             <DocumentFilters filters={filters} onFiltersChange={setFilters} />
             <DocumentList
               documents={filteredDocuments}
               selectedDocumentId={selectedDocumentId}
               onSelectDocument={setSelectedDocumentId}
               processingDocumentId={processingDocumentId}
+              userRole={userRole}
             />
           </div>
           <div className="md:col-span-8 lg:col-span-9 xl:col-span-9 flex flex-col overflow-hidden">
@@ -208,7 +221,12 @@ export default function Home() {
                   <TabsContent value="details" className="flex-grow">
                     <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 h-full">
                       <div className="xl:col-span-2">
-                        <DocumentDetails document={selectedDocument} onShare={handleShareDocument} isLoading={isLoading && processingDocumentId === selectedDocumentId} />
+                        <DocumentDetails 
+                            document={selectedDocument} 
+                            onShare={handleShareDocument} 
+                            isLoading={isLoading && processingDocumentId === selectedDocumentId}
+                            userRole={userRole}
+                        />
                       </div>
                       <div className="xl:col-span-1">
                         <DocumentAnalytics documents={documents} />
@@ -222,6 +240,7 @@ export default function Home() {
                     <TransactionDemo 
                       document={selectedDocument}
                       onSignDocument={handleSignDocument}
+                      userRole={userRole}
                     />
                   </TabsContent>
                 </Tabs>
