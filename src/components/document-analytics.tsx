@@ -1,12 +1,16 @@
 
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { Document } from '@/lib/types';
-import { BarChart2, Info, FileText, Tags } from 'lucide-react';
+import { BarChart2, Info, FileText, Tags, Loader2 } from 'lucide-react';
+import { Button } from './ui/button';
+import ComplianceReportDialog from './compliance-report-dialog';
+import { generateComplianceReport } from '@/app/actions';
+import { useToast } from '@/hooks/use-toast';
 
 interface DocumentAnalyticsProps {
   documents: Document[];
@@ -20,6 +24,32 @@ const chartConfig = {
 };
 
 export default function DocumentAnalytics({ documents }: DocumentAnalyticsProps) {
+  const [isReportLoading, setIsReportLoading] = useState(false);
+  const [report, setReport] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
+
+  const handleGenerateReport = async () => {
+    setIsReportLoading(true);
+    try {
+        const result = await generateComplianceReport(documents);
+        if (result.error) {
+            throw new Error(result.error);
+        }
+        setReport(result.report || 'No report was generated.');
+        setIsDialogOpen(true);
+    } catch(error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        toast({
+            variant: 'destructive',
+            title: 'Report Generation Failed',
+            description: errorMessage,
+        });
+    } finally {
+        setIsReportLoading(false);
+    }
+  }
+
   const { keywordData, totalDocuments, totalKeywords } = useMemo(() => {
     if (documents.length === 0) {
       return { keywordData: [], totalDocuments: 0, totalKeywords: 0 };
@@ -69,11 +99,30 @@ export default function DocumentAnalytics({ documents }: DocumentAnalyticsProps)
         </div>
         <Card>
         <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-                <BarChart2 className="h-5 w-5" />
-                Keyword Analysis
-            </CardTitle>
-            <CardDescription>Top 10 keywords across all documents</CardDescription>
+            <div className="flex justify-between items-start">
+                <div>
+                    <CardTitle className="flex items-center gap-2">
+                        <BarChart2 className="h-5 w-5" />
+                        Keyword Analysis
+                    </CardTitle>
+                    <CardDescription>Top 10 keywords across all documents</CardDescription>
+                </div>
+                <ComplianceReportDialog 
+                    report={report} 
+                    isOpen={isDialogOpen} 
+                    onOpenChange={setIsDialogOpen}
+                >
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleGenerateReport} 
+                        disabled={isReportLoading || documents.length === 0}
+                    >
+                        {isReportLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Generate Report
+                    </Button>
+                </ComplianceReportDialog>
+            </div>
         </CardHeader>
         <CardContent>
             {keywordData.length > 0 ? (

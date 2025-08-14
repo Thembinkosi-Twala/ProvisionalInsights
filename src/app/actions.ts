@@ -4,6 +4,7 @@ import { complianceCheck } from '@/ai/flows/compliance-check';
 import { extractDocumentMetadata } from '@/ai/flows/extract-document-metadata';
 import { signDocument as signDocumentFlow } from '@/ai/flows/sign-document';
 import { archiveDocument as archiveDocumentFlow } from '@/ai/flows/archive-document-flow';
+import { generateComplianceReport as generateComplianceReportFlow } from '@/ai/flows/generate-compliance-report';
 import type { Document } from '@/lib/types';
 import { randomUUID } from 'crypto';
 
@@ -59,5 +60,15 @@ export async function archiveDocument(document: Document): Promise<{ error?: str
     } catch (e) {
         console.error(e);
         return { error: 'Failed to archive the document.' };
+    }
+}
+
+export async function generateComplianceReport(documents: Document[]): Promise<{ report?: string, error?: string }> {
+    try {
+        const result = await generateComplianceReportFlow({ documents });
+        return { report: result.report };
+    } catch (e) {
+        console.error(e);
+        return { error: 'Failed to generate compliance report.' };
     }
 }
