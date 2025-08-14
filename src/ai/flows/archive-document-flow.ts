@@ -18,6 +18,7 @@ const ArchiveDocumentInputSchema = z.object({
         keywords: z.array(z.string()),
         summary: z.string(),
     }).describe('The document metadata.'),
+    user: z.string().describe('The user who signed the document.'),
 });
 export type ArchiveDocumentInput = z.infer<typeof ArchiveDocumentInputSchema>;
 
@@ -43,7 +44,7 @@ const archiveDocumentFlow = ai.defineFlow(
       documentId: input.documentId,
       fileName: input.fileName,
       signedAt: new Date().toISOString(),
-      user: 'system@provincial.gov', // Placeholder for actual user
+      user: input.user,
       metadata: input.metadata,
     };
 

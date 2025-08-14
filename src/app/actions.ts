@@ -42,7 +42,7 @@ export async function signDocument(documentDataUri: string, signatureDataUri: st
     }
 }
 
-export async function archiveDocument(document: Document): Promise<{ error?: string }> {
+export async function archiveDocument(document: Document, user: string): Promise<{ error?: string }> {
     try {
         await archiveDocumentFlow({ 
             documentId: document.id,
@@ -54,7 +54,8 @@ export async function archiveDocument(document: Document): Promise<{ error?: str
                 dateCreated: document.dateCreated,
                 keywords: document.keywords,
                 summary: document.summary,
-            }
+            },
+            user,
         });
         return {};
     } catch (e) {

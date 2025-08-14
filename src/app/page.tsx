@@ -94,7 +94,7 @@ export default function Home() {
 
   const handleSignDocument = async (documentId: string, signatureDataUrl: string) => {
     const originalDocument = documents.find(doc => doc.id === documentId);
-    if (!originalDocument) return;
+    if (!originalDocument || !userRole) return;
 
     setIsLoading(true);
     setProcessingDocumentId(documentId);
@@ -117,7 +117,7 @@ export default function Home() {
             description: 'The signature has been embedded into the document.',
         });
 
-        const archiveResult = await archiveDocument(signedDoc);
+        const archiveResult = await archiveDocument(signedDoc, userRole);
         if (archiveResult.error) {
             toast({
                 variant: 'destructive',
