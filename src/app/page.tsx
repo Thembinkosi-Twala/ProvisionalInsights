@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { handleDocumentUpload, archiveDocument } from './actions';
 import { type Document } from '@/lib/types';
 import DocumentUpload from '@/components/document-upload';
@@ -15,6 +15,7 @@ import { signDocument } from './actions';
 import DocumentPreview from '@/components/document-preview';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TransactionDemo from '@/components/transaction-demo';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -22,6 +23,17 @@ export default function Home() {
   const [filters, setFilters] = useState<Filter[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const authStatus = sessionStorage.getItem('isAuthenticated');
+    if (authStatus !== 'true') {
+      router.push('/login');
+    } else {
+      setIsAuthenticated(true);
+    }
+  }, [router]);
 
   const onFileUpload = async (file: File) => {
     setIsLoading(true);
@@ -145,6 +157,10 @@ export default function Home() {
     () => documents.find(doc => doc.id === selectedDocumentId),
     [documents, selectedDocumentId]
   );
+  
+  if (!isAuthenticated) {
+    return null; // or a loading spinner
+  }
   
   return (
     <div className="flex flex-col h-screen bg-background font-body">
